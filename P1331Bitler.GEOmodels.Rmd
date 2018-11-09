@@ -1,0 +1,532 @@
+---
+title: "P1331Bitler.GEOmodels"
+author: "Harry Smith"
+date: "6/28/2018"
+output:
+  html_document: default
+  word_document: default
+---
+
+##Introduction
+
+The goal of this analysis is to verify whether or not the candidate genes from Ben Bilter can predict cancer survival. Candidate genes were provided to me by Ben on 04/03/2018. Validation data sets were downloaded, cleaned, and normalized by Lauren Vanderlinden, and were downloaded by me on 04/03/2018. Validation data sets encompass bladder, colorectal, prostate, breast, and lung cancers and are summarized in Table 1.  
+
+Table1.
+
+| Data set | Cancer | GEO ID | Array | 
+| :-----: | :----: | :----: |:-----:|
+| Bladder Cancer | CNUH cohort | GSE13507 | Illumina human-6 v2.0 | 
+| Bladder Cancer | Lindgren | GSE19915 | Swegene Custom | 
+| Colorectal Cancer | CIT | GSE39582 | Affy Human Genome U133 Plus 2.0  | 
+| Prostate Cancer | Sboner | GSE16560 | Illumina	Human 6k Transcriptionally Informative Gene Panel for DASL |
+| Breast Cancer | Bos | GSE12276 | Affy Human Genome U133 Plus 2.0  | 
+| Lung Cancer | Duke | GSE3141 | Affy Human Genome U133 Plus 2.0 | 
+
+##Methods
+
+For each cohort, to extract expression values for each of the candidate genes expected to predict survival, genes were mapped to their associated probe set IDs from the respective platform annotation data sets, or if the reference data set was a list of genes, than expression data was pulled out based on matching gene names. These probeset IDs and gene names were then used to subset the expression data from each experiment listed in table 1. Of the candidate genes, 94 had probesets present on all array platforms so these are the ones used in all subsequent survival analyses. 
+For each data set, modeling survival and generating a Kaplan-Meier curve on the candidate gene signature score were done in 3 steps: 1)The first step was to fit individual Cox proportional hazard models for each probe set and extract the coefficient for each gene. 2) A gene signature score was calculated by taking the weighted sum of the candidate genes using the coefficient from step 1 as the respective weights.  We then used the median of the gene signature distribution to divide the scores into high (above median) and low (below median) scores. 3) The dichotomous description of gene signature score (high or low gene signature score) was then used as a predictor to fit new Cox proportional hazard models and generate a Kaplan-Meier curve. P-values were taken from the log-likelihood statistic from the Cox proportional hazard models. For verification, we  permuted a subset of random expression and random outcome (time, vital status) values, and broke the relationship between expression and outcome. This was done 1000 times, and for each permuted data set we modeled survival as described for the original analysis, and generated a distribution of log-likelihood statistics. We then calculated p-values for each cohort’s permutation analysis, which describes the proportion of times the permuted likelihood test was more extreme (i.e. more significant) than the log-likelihood generated from the original analysis
+
+##Results
+
+Describe final GEO data sets used for KM analysis. 
+The 94 candidate genes were able to significantly predict survival for all cohorts and cancer types described in table 1. P-values from the cox proportional hazard model log likelihood tests are displayed in the legend of the Kaplan-Meier plot for each cohort. All of the Kaplan-Mayer curves show good separation of survival based on the gene signature scores (survival estimates for high scores are in red and low scores are in blue). The results for the permutation test are summarized in table 2. After breaking the relationship between expression and outcome, our prediction models perform significantly better than the permuted models only for the GSE19915-Bladder and GSE16560-Prostate cohorts.  
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Set up workspace
+rm(list = ls())
+options(stringsAsFactors = FALSE)
+library(knitr)
+setwd("/Users/harry/Documents/CIDA/Projects/P1331Bitler/code")
+source("permutationFunctions.forHarry.R")
+source("multiplot.R")
+'%!in%' <- function(x,y)!('%in%'(x,y))
+
+# Set directory where raw data is
+dir <- "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataRaw/"
+dir2 <- "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataFromLauren/"
+
+# load annotation sets
+illumina6.anno = read.csv(paste(dir2, "IlluminaHuman6v2.0beadchip.annotation.LV.csv", sep = ""), header = TRUE)
+affy133.anno = read.csv(paste(dir2, "AffyHumanU133A.annotation.LV.csv", sep = ""), header = TRUE)
+hg133.anno = read.csv(paste(dir2, "hg133_plus2_anno.csv", sep = ""), header = TRUE)
+
+# read in candidate gene list data table
+Top_Genes <- read.csv(file = paste(dir, "Top_Genes", ".csv", sep = ""), header = TRUE)
+bensGenes <- Top_Genes$Gene
+
+# Genes to Illumina probeset ID ###### This works for this annotation dataset ############
+illumina6.OC108 <- illumina6.anno[illumina6.anno$Symbol %in% bensGenes, ]
+sum(bensGenes %in% illumina6.OC108$Symbol)
+bensGenes[which(bensGenes %!in% illumina6.OC108$Symbol)]
+# Get probeset IDs
+illumina6.OC108.ps <- illumina6.OC108$ID
+
+## Caroline wrote the code to subset the affy and hg datasets ##
+# Genes to AffyHumanU133A probeset ID 
+affy133.OC108 <- affy133.anno[sapply(strsplit(affy133.anno$Gene.Symbol, ' /// '), function(x) any(x %in% bensGenes)), ]  ##Caroline aded this
+
+# Genes to hg133plus probeset ID 
+hg133.OC108 <- hg133.anno[sapply(strsplit(hg133.anno$Gene.Symbol, ' /// '), function(x) any(x %in% bensGenes)), ]  ##Caroline aded this
+# get probeset IDs
+hg133.OC108.ps <- hg133.OC108$Probe.Set.ID
+```
+
+**A. Bladder Cancer - CNUH cohort** 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+load(file=paste(dir2, "Korea.Rdata", sep = ""))
+#GSE13507.expr[1:5, 1:5]
+#summary(GSE13507.OS.outcome)
+#summary(GSE13507.OS.time)
+
+#get the probesets to perform Cox proportional-hazard regression on; MY DATA
+cnuh = GSE13507.expr[which(rownames(GSE13507.expr) %in% illumina6.OC108.ps), -which(is.na(GSE13507.OS.time))]
+cnuh.outcome = as.numeric(GSE13507.OS.outcome[!is.na(GSE13507.OS.outcome)])
+cnuh.time = as.numeric(GSE13507.OS.time[!is.na(GSE13507.OS.time)])
+
+
+##STEP1: Cox PH Regression;
+library(survival)
+library(simPH)
+
+#table(colnames(cit.2)==cit.pheno.2[,"Accession"])
+
+cox.byGene = apply(cnuh, 1, function(a) coxph(Surv(cnuh.time, cnuh.outcome) ~ a)$coefficients)
+
+##Step2: Get Sample Scores;
+#table(names(cox.byGene)==rownames(cnuh))
+cnuh.sample.scores = apply(cnuh, 2, function(a) sum(a*cox.byGene))
+#hist(cnuh.sample.scores)
+
+cnuh.high = names(cnuh.sample.scores[which(cnuh.sample.scores > median(cnuh.sample.scores))])
+cnuh.low = names(cnuh.sample.scores[which(cnuh.sample.scores <= median(cnuh.sample.scores))])
+
+##Step3: Get Kaplan-Meier Plots;
+bladder.signature = c()
+for(i in 1:ncol(cnuh)){
+  if(colnames(cnuh)[i] %in% cnuh.high){bladder.signature[i]="Bladder High"}else{bladder.signature[i]="Bladder Low"}
+}
+
+cnuh.bladder.surv <- survfit(Surv(cnuh.time, cnuh.outcome)~ as.factor(bladder.signature), conf.type="none")
+cnuh.cox <- coxph(Surv(cnuh.time, cnuh.outcome)~ as.factor(bladder.signature))
+cnuh.sum <- summary(cnuh.cox)
+cnuh.stat <- cnuh.sum$logtest[1]
+cnuh.wstat <- cnuh.sum$waldtest[1]
+
+plot(cnuh.bladder.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Disease-Specific Survival Predicted by 94 Ovarian Genes\n Bladder Cancer CNUH Cohort (GSE13507)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+par(font=1) 
+legend("bottomleft", legend=c("High", "Low", "p-value = 1.18e-07"), fill= c("red", "blue", "white"),border="white", col=c("red", "blue", "black"))
+
+## Permutation test and p-value generation
+set.seed(2110)
+## log likelihood
+cnuh.perm <- getKM.permuted.LRT.v2(cnuh, nPerm = 10, cnuh.outcome, cnuh.time)
+cnuh.pp <- getPermutedPval(cnuh.stat, cnuh.perm$lltest)
+## wald
+cnuh.ppw <- getPermutedPval(cnuh.wstat, cnuh.perm$wtest)
+
+## Plot distribution of permuted stats
+library(ggplot2)
+cnuh.dist <-ggplot(as.data.frame(cnuh.perm), aes(x=cnuh.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Bladder Cancer CNUH Cohort (GSE13507)")
+cnuh.distw <-ggplot(as.data.frame(cnuh.perm), aes(x=cnuh.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Bladder Cancer CNUH Cohort (GSE13507)")
+```
+
+**B. Bladder Cancer - Lindgren** 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+load(file=paste(dir2, "Lindgren.Rdata", sep = ""))
+
+#get the probesets to perform Cox proportional-hazard regression on;
+lindgren = Lindgren.expr[which(rownames(Lindgren.expr) %in% as.matrix(bensGenes)), ]
+
+##STEP1: Cox PH Regression;
+library(survival)
+library(simPH)
+
+#table(colnames(cit.2)==cit.pheno.2[,"Accession"])
+
+cox.byGene = apply(lindgren, 1, function(a) coxph(Surv(Lindgren.time, Lindgren.outcome) ~ a)$coefficients)
+
+##Step2: Get Sample Lindgrenores;
+#table(names(cox.byGene)==rownames(lindgren))
+lindgren.sample.scores = apply(lindgren, 2, function(a) sum(a*cox.byGene))
+#hist(lindgren.sample.scores)
+
+lindgren.high = names(lindgren.sample.scores[which(lindgren.sample.scores > median(lindgren.sample.scores))])
+lindgren.low = names(lindgren.sample.scores[which(lindgren.sample.scores <= median(lindgren.sample.scores))])
+
+##Step3: Get Kaplan-Meier Plots;
+bladder.signature = c()
+for(i in 1:ncol(lindgren)){
+  if(colnames(lindgren)[i] %in% lindgren.high){bladder.signature[i]="Bladder High"}else{bladder.signature[i]="Bladder Low"}
+}
+
+lindgren.bladder.surv <- survfit(Surv(Lindgren.time, Lindgren.outcome)~ as.factor(bladder.signature), conf.type="none")
+lindgren.cox <- coxph(Surv(Lindgren.time, Lindgren.outcome)~ as.factor(bladder.signature))
+lindgren.sum <- summary(lindgren.cox)
+lindgren.stat <- lindgren.sum$logtest[1]
+lindgren.wstat <- lindgren.sum$waldtest[1]
+
+plot(lindgren.bladder.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Disease-Specific Survival Predicted by 94 Ovarian Genes\n Bladder Cancer Lindgren Cohort (GSE19915)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+par(font=1) 
+legend("bottomleft", legend=c("High", "Low", "p-value = 6.54e-06"), fill = c("red", "blue", "white"))
+
+set.seed(2110)
+## log likelihood
+lindgren.perm <- getKM.permuted.LRT.v2(lindgren, nPerm = 10, Lindgren.outcome, Lindgren.time)
+lindgren.pp <- getPermutedPval(lindgren.stat, lindgren.perm$lltest)
+## wald
+lindgren.ppw <- getPermutedPval(lindgren.wstat, lindgren.perm$wtest)
+
+## Plot distribution of permuted stats
+library(ggplot2)
+lindgren.dist <-ggplot(as.data.frame(lindgren.perm), aes(x=lindgren.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Bladder Cancer Lindgren Cohort (GSE19915)")
+lindgren.distw <-ggplot(as.data.frame(lindgren.perm), aes(x=lindgren.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Bladder Cancer Lindgren Cohort (GSE19915)")
+```
+
+**C. Colorectal Cancer - CIT** 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+load(file=paste(dir2, "cit.expr.Rdata", sep = ""))
+cit.pheno = read.csv(file=paste(dir2, "samplePhenoInfo.fromPaper.csv", sep = ""))
+cit.nameKey = read.csv(file=paste(dir2, "sample.arrayName.GEOname.key.csv", sep = ""))
+cit.pheno.2 = merge(cit.nameKey, cit.pheno, by.x="Title", by.y="id")
+
+#get the ralA probesetsto perform Cox proportional-hazard regression on; - MY DATA
+cit.2 = cit[which(rownames(cit) %in% hg133.OC108.ps),which(colnames(cit) %in% as.matrix(cit.pheno.2$Accession))]
+
+
+##STEP1: Cox PH Regression;
+library(survival)
+library(simPH)
+
+#table(colnames(cit.2)==cit.pheno.2[,"Accession"])
+
+cox.byGene = apply(cit.2, 1, function(a) coxph(Surv(cit.pheno.2$RFS.delay, cit.pheno.2$RFS.event) ~ a)$coefficients)
+
+##Step2: Get Sample Scores;
+#table(names(cox.byGene)==rownames(cit.2))
+cit.sample.scores = apply(cit.2, 2, function(a) sum(a*cox.byGene))
+#hist(cit.sample.scores)
+
+cit.high = names(cit.sample.scores[which(cit.sample.scores > median(cit.sample.scores))])
+cit.low = names(cit.sample.scores[which(cit.sample.scores <= median(cit.sample.scores))])
+
+##Step3: Get Kaplan-Meier Plots;
+#cit.high.surv <- survfit(Surv(cit.pheno.2[which(cit.pheno.2$Accession %in% cit.high), "RFS.delay"], cit.pheno.2[which(cit.pheno.2$Accession %in% cit.high), "RFS.event"])~ 1, conf.type="none")
+
+bladder.signature = c()
+for(i in 1:nrow(cit.pheno.2)){
+  if(cit.pheno.2[i,"Accession"] %in% cit.high){bladder.signature[i]="Bladder High"}else{bladder.signature[i]="Bladder Low"}
+}
+
+#cit.low.surv <- survfit(Surv(cit.pheno.2[which(cit.pheno.2$Accession %in% cit.low), "RFS.delay"], cit.pheno.2[which(cit.pheno.2$Accession %in% cit.low), "RFS.event"])~ 1, conf.type="none")
+
+
+cit.surv <- survfit(Surv(cit.pheno.2$RFS.delay, cit.pheno.2$RFS.event)~ as.factor(bladder.signature), conf.type="none")
+cit.cox <- coxph(Surv(cit.pheno.2$RFS.delay, cit.pheno.2$RFS.event)~ as.factor(bladder.signature))
+cit.sum <- summary(cit.cox)
+cit.stat <- cit.sum$logtest[1]
+cit.wstat <- cit.sum$waldtest[1]
+
+plot(cit.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Colorectal Cancer CIT (GSE39582)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+par(font=1) 
+legend("bottomleft", legend=c("High", "Low", "p-value = 5.81e-06"), fill = c("red", "blue", "white"))
+
+set.seed(2110)
+cit.perm <- getKM.permuted.LRT.v2(cit.2, nPerm = 10, cit.pheno.2$RFS.event, cit.pheno.2$RFS.delay)
+## log likelihood
+cit.pp <- getPermutedPval(cit.stat, cit.perm$lltest)
+## wald
+cit.ppw <- getPermutedPval(cit.wstat, cit.perm$wtest)
+
+## Plot distribution of permuted stats
+library(ggplot2)
+cit.dist <-ggplot(as.data.frame(cit.perm), aes(x=cit.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Colorectal Cancer CIT (GSE39582)")
+cit.distw <-ggplot(as.data.frame(cit.perm), aes(x=cit.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Colorectal Cancer CIT (GSE39582)")
+```
+
+**D. Prostate Cancer - Sboner** 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+load(file=paste(dir2, "Sboner.project.Rdata", sep = ""))
+#table(pd.Sboner$geo_accession==colnames(expr.Sboner))
+
+#get the BC97 candidate genes to perform Cox proportional-hazard regression on;
+Sboner.arrayWant = Sboner.arrayInfo[which(Sboner.arrayInfo$Symbol %in% as.matrix(bensGenes)),]
+Sboner.psWant = as.matrix(Sboner.arrayWant$ID)
+Sboner.2 = expr.Sboner[which(rownames(expr.Sboner) %in% Sboner.psWant),]
+
+##STEP1: Cox PH Regression;
+library(survival)
+library(simPH) 
+
+#table(colnames(Sboner.2)==Sboner.pheno.2[,"Accession"])
+
+pd.Sboner$time = as.numeric(gsub("fup.month: ", "", pd.Sboner$characteristics_ch1.9)) 
+pd.Sboner$eventCharacter = gsub("status.all: ", "", pd.Sboner$characteristics_ch1.8)
+
+event = c()
+for(i in 1:length(pd.Sboner$eventCharacter)){
+  if(pd.Sboner[i,"eventCharacter"]=="Dead"){event[i]=1}else{event[i]=0}
+}
+pd.Sboner$event = event
+
+cox.byGene = apply(Sboner.2, 1, function(a) coxph(Surv(pd.Sboner$time, pd.Sboner$event) ~ a)$coefficients)
+
+##Step2: Get Sample Scores;
+#table(names(cox.byGene)==rownames(Sboner.2))
+Sboner.sample.scores = apply(Sboner.2, 2, function(a) sum(a*cox.byGene))
+#hist(Sboner.sample.scores)
+
+Sboner.high = names(Sboner.sample.scores[which(Sboner.sample.scores > median(Sboner.sample.scores))])
+Sboner.low = names(Sboner.sample.scores[which(Sboner.sample.scores <= median(Sboner.sample.scores))])
+
+##Step3: Get Kaplan-Meier Plots;
+#Sboner.high.surv <- survfit(Surv(Sboner.pheno.2[which(Sboner.pheno.2$Accession %in% Sboner.high), "RFS.delay"], Sboner.pheno.2[which(Sboner.pheno.2$Accession %in% Sboner.high), "RFS.event"])~ 1, conf.type="none")
+
+bladder.signature = c()
+for(i in 1:nrow(pd.Sboner)){
+  if(pd.Sboner[i,"geo_accession"] %in% Sboner.high){bladder.signature[i]="Bladder High"}else{bladder.signature[i]="Bladder Low"}
+}
+
+#Sboner.low.surv <- survfit(Surv(Sboner.pheno.2[which(Sboner.pheno.2$Accession %in% Sboner.low), "RFS.delay"], Sboner.pheno.2[which(Sboner.pheno.2$Accession %in% Sboner.low), "RFS.event"])~ 1, conf.type="none")
+
+
+Sboner.surv <- survfit(Surv(pd.Sboner$time, pd.Sboner$event)~ as.factor(bladder.signature), conf.type="none")
+Sboner.cox <- coxph(Surv(pd.Sboner$time, pd.Sboner$event)~ as.factor(bladder.signature))
+Sboner.sum <- summary(Sboner.cox)
+Sboner.stat <- Sboner.sum$logtest[1]
+Sboner.wstat <- Sboner.sum$waldtest[1]
+
+plot(Sboner.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Prostate Cancer Sboner (GSE16560)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+par(font=1) 
+legend("bottomleft", legend=c("High", "Low", "p-value = 1.29e-09"), fill = c("red", "blue", "white"))
+
+set.seed(2110)
+Sboner.perm <- getKM.permuted.LRT.v2(Sboner.2, nPerm = 10, pd.Sboner$event, pd.Sboner$time)
+## log likelihood
+Sboner.pp <- getPermutedPval(Sboner.stat, Sboner.perm$lltest)
+## wald
+Sboner.ppw <- getPermutedPval(Sboner.wstat, Sboner.perm$wtest)
+
+## Plot distribution of permuted stats
+library(ggplot2)
+Sboner.dist <-ggplot(as.data.frame(Sboner.perm), aes(x=Sboner.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Prostate Cancer Sboner (GSE16560)")
+Sboner.distw <-ggplot(as.data.frame(Sboner.perm), aes(x=Sboner.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Prostate Cancer Sboner (GSE16560)")
+```
+
+**E. Breast Cancer - Bos** 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+load(file=paste(dir2, "Bos.project.Rdata", sep = ""))
+#table(pd.Sboner$geo_accession==colnames(expr.Sboner))
+
+#get the BC97 candidate genes to perform Cox proportional-hazard regression on;
+Bos2 = Bos[which(rownames(Bos) %in% hg133.OC108.ps),]
+
+##STEP1: Cox PH Regression;
+library(survival)
+library(simPH) 
+
+#table(colnames(Sboner.2)==Sboner.pheno.2[,"Accession"])
+Bos.pd = cbind(t(time), event)
+cox.byGene = apply(Bos2, 1, function(a) coxph(Surv(Bos.pd[,"survivaTime.months"], Bos.pd[,"event"]) ~ a)$coefficients)
+
+
+##Step2: Get Sample Scores;
+#table(names(cox.byGene)==rownames(Bos.2))
+Bos.sample.scores = apply(Bos2, 2, function(a) sum(a*cox.byGene))
+#hist(Bos.sample.scores)
+
+Bos.high = names(Bos.sample.scores[which(Bos.sample.scores > median(Bos.sample.scores))])
+Bos.low = names(Bos.sample.scores[which(Bos.sample.scores <= median(Bos.sample.scores))])
+
+##Step3: Get Kaplan-Meier Plots;
+#Bos.high.surv <- survfit(Surv(Bos.pheno.2[which(Bos.pheno.2$Accession %in% Bos.high), "RFS.delay"], Bos.pheno.2[which(Bos.pheno.2$Accession %in% Bos.high), "RFS.event"])~ 1, conf.type="none")
+
+bladder.signature = c()
+for(i in 1:nrow(Bos.pd)){
+  if(rownames(Bos.pd)[i] %in% as.matrix(Bos.high)){bladder.signature[i]="Bladder High"}else{bladder.signature[i]="Bladder Low"}
+}
+
+#Bos.low.surv <- survfit(Surv(Bos.pheno.2[which(Bos.pheno.2$Accession %in% Bos.low), "RFS.delay"], Bos.pheno.2[which(Bos.pheno.2$Accession %in% Bos.low), "RFS.event"])~ 1, conf.type="none")
+
+
+Bos.surv <- survfit(Surv(Bos.pd[,"survivaTime.months"], Bos.pd[,"event"])~ as.factor(bladder.signature), conf.type="none")
+Bos.cox <- coxph(Surv(Bos.pd[,"survivaTime.months"], Bos.pd[,"event"])~ as.factor(bladder.signature))
+Bos.sum <- summary(Bos.cox)
+Bos.stat <- Bos.sum$logtest[1]
+Bos.wstat <- Bos.sum$waldtest[1]
+
+plot(Bos.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Breast Cancer Bos (GSE12276)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+legend("topright", legend=c("High", "Low", "p-value = 3.44e-07"), fill= c("red", "blue", "white"))
+
+set.seed(2110)
+Bos.perm <- getKM.permuted.LRT.v2(Sboner.2, nPerm = 10, pd.Sboner$event, pd.Sboner$time)
+## log likelihood
+Bos.pp <- getPermutedPval(Bos.stat, Bos.perm$lltest)
+## wald
+Bos.ppw <- getPermutedPval(Bos.wstat, Bos.perm$wtest)
+
+## Plot distribution of permuted stats
+library(ggplot2)
+Bos.dist <-ggplot(as.data.frame(Bos.perm), aes(x=Bos.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Breast Cancer Bos (GSE12276)")
+Bos.distw <-ggplot(as.data.frame(Bos.perm), aes(x=Bos.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Breast Cancer Bos (GSE12276)")
+```
+
+**F. Lung Cancer - Duke** 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+load(file=paste(dir2, "Duke.project.Rdata", sep = ""))
+#table(pd.Sboner$geo_accession==colnames(expr.Sboner))
+
+#get the BC97 candidate genes to perform Cox proportional-hazard regression on;
+Duke2 = Duke[which(rownames(Duke) %in% hg133.OC108.ps),]
+
+##STEP1: Cox PH Regression;
+library(survival)
+library(simPH) 
+
+#table(colnames(Sboner.2)==Sboner.pheno.2[,"Accession"])
+cox.byGene = apply(Duke2, 1, function(a) coxph(Surv(as.numeric(forAnalysis[,"time"]), as.numeric(forAnalysis[,"event"])) ~ a)$coefficients)
+
+
+##Step2: Get Sample Scores;
+#table(names(cox.byGene)==rownames(Duke.2))
+Duke.sample.scores = apply(Duke2, 2, function(a) sum(a*cox.byGene))
+#hist(Duke.sample.scores)
+
+Duke.high = names(Duke.sample.scores[which(Duke.sample.scores > median(Duke.sample.scores))])
+Duke.low = names(Duke.sample.scores[which(Duke.sample.scores <= median(Duke.sample.scores))])
+
+##Step3: Get Kaplan-Meier Plots;
+#Duke.high.surv <- survfit(Surv(Duke.pheno.2[which(Duke.pheno.2$Accession %in% Duke.high), "RFS.delay"], Duke.pheno.2[which(Duke.pheno.2$Accession %in% Duke.high), "RFS.event"])~ 1, conf.type="none")
+
+bladder.signature = c()
+for(i in 1:ncol(Duke)){
+  if(colnames(Duke)[i] %in% as.matrix(Duke.high)){bladder.signature[i]="Bladder High"}else{bladder.signature[i]="Bladder Low"}
+}
+
+#Duke.low.surv <- survfit(Surv(Duke.pheno.2[which(Duke.pheno.2$Accession %in% Duke.low), "RFS.delay"], Duke.pheno.2[which(Duke.pheno.2$Accession %in% Duke.low), "RFS.event"])~ 1, conf.type="none")
+
+
+Duke.surv <- survfit(Surv(as.numeric(forAnalysis[,"time"]), as.numeric(forAnalysis[,"event"]))~ as.factor(bladder.signature), conf.type="none")
+Duke.cox <- coxph(Surv(as.numeric(forAnalysis[,"time"]), as.numeric(forAnalysis[,"event"]))~ as.factor(bladder.signature))
+Duke.sum <- summary(Duke.cox)
+Duke.stat <- Duke.sum$logtest[1]
+Duke.wstat <- Duke.sum$waldtest[1]
+
+plot(Duke.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Lung Cancer Duke (GSE3141)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+legend("bottomleft", legend=c("High", "Low", "p-value = 3.61e-10"), fill= c("red", "blue", "white"))
+
+set.seed(2110)
+Duke.perm <- getKM.permuted.LRT.v2(Duke2, nPerm = 10, as.numeric(forAnalysis[,"event"]), as.numeric(forAnalysis[,"time"]))
+## log likelihood
+Duke.pp <- getPermutedPval(Duke.stat, Duke.perm$lltest)
+## wald
+Duke.ppw <- getPermutedPval(Duke.wstat, Duke.perm$wtest)
+
+## Plot distribution of permuted stats
+library(ggplot2)
+Duke.dist <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
+Duke.distw <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
+```
+
+## KM Plots for manuscript
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+png(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/KM_curves_Manuscript.png", height = 15, width = 15, res = 400, units = "in")
+## set param to 3 rows and 2 columns
+par(mfrow=c(3,2))
+## cnuh bladder
+plot(cnuh.bladder.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Disease-Specific Survival Predicted by 94 Ovarian Genes\n Bladder Cancer CNUH Cohort (GSE13507)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1.4, cex.lab=1.4, cex.axis=1.4)
+par(font=1) 
+legend("bottomleft", legend=c("High", "Low", "p-value = 1.18e-07"), fill= c("red", "blue", "white"),border="white", col=c("red", "blue", "black"), cex = 1.4)
+##lindgren bladder
+plot(lindgren.bladder.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Disease-Specific Survival Predicted by 94 Ovarian Genes\n Bladder Cancer Lindgren Cohort (GSE19915)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1.4, cex.lab=1.4, cex.axis=1.4)
+par(font=1) 
+legend("bottomleft", legend=c("High", "Low", "p-value = 6.54e-06"), fill = c("red", "blue", "white"), cex = 1.4)
+## cit colorectal
+plot(cit.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Colorectal Cancer CIT (GSE39582)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1.4, cex.lab=1.4, cex.axis=1.4)
+par(font=1) 
+legend("bottomleft", legend=c("High", "Low", "p-value = 5.81e-06"), fill = c("red", "blue", "white"), cex = 1.4)
+## Sboner prostate
+plot(Sboner.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Prostate Cancer Sboner (GSE16560)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1.4, cex.lab=1.4, cex.axis=1.4)
+par(font=1) 
+legend("bottomleft", legend=c("High", "Low", "p-value = 1.29e-09"), fill = c("red", "blue", "white"), cex = 1.4)
+## Bos breast
+plot(Bos.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Breast Cancer Bos (GSE12276)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1.4, cex.lab=1.4, cex.axis=1.4)
+legend("topright", legend=c("High", "Low", "p-value = 3.44e-07"), fill= c("red", "blue", "white"), cex = 1.4)
+## Duke lung
+plot(Duke.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Lung Cancer Duke (GSE3141)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1.4, cex.lab=1.4, cex.axis=1.4)
+legend("bottomleft", legend=c("High", "Low", "p-value = 3.61e-10"), fill= c("red", "blue", "white"), cex = 1.4)
+dev.off()
+```
+
+## Plot Distributions of permuted statistics
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+multiplot(cnuh.dist, cnuh.dist, lindgren.dist, lindgren.distw, cit.dist, cit.distw, Sboner.dist, Sboner.distw, Bos.dist, Bos.distw, Duke.dist, Duke.distw, cols = 4)
+```
+
+## Summary table of p-values from Cox PH modeling
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+tissue <- c("Bladder", "Bladder", "Colorectal", "Prostate", "Breast", "Lung")
+cohort <- c("GSE13507C", "GSE19915", "GSE39582", "GSE16560", "GSE12276", "GSE3141")
+llpval <- c(cnuh.sum$logtest[3], lindgren.sum$logtest[3], cit.sum$logtest[3], Sboner.sum$logtest[3], Bos.sum$logtest[3], Duke.sum$logtest[3])
+wpval <- c(cnuh.sum$waldtest[3], lindgren.sum$waldtest[3], cit.sum$waldtest[3], Sboner.sum$waldtest[3], Bos.sum$waldtest[3], Duke.sum$waldtest[3])
+modelTable <- data.frame(tissue, cohort, llpval, wpval)
+colnames(modelTable) <- c("Cancer Type", "Dataset", "Log Likelihood P-Value", "Wald P-Value")
+kable(modelTable, caption = "Table 2. Model P-values")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#save(cnuh.pp, lindgren.pp, cit.pp, Sboner.pp, Bos.pp, Duke.pp, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults.RData")
+#load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults.RData")
+#Generate table of perm results
+ctype <- c("Bladder", "Bladder", "Colorectal", "Prostate", "Breast", "Lung")
+dset <- c("GSE13507C", "GSE19915", "GSE39582", "GSE16560", "GSE12276", "GSE3141")
+pval <- c(cnuh.pp, lindgren.pp, cit.pp, Sboner.pp, Bos.pp, Duke.pp)
+perm.rslts <- data.frame("Cancer Type" = ctype, "Dataset" = dset, "P-value" = pval)
+colnames(perm.rslts) <- c("Cancer Type", "Dataset", "P-value")
+kable(perm.rslts, caption = "Table 3. Permutation P-values")
+```
