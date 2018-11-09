@@ -114,14 +114,14 @@ cnuh.sum <- summary(cnuh.cox)
 cnuh.stat <- cnuh.sum$logtest[1]
 cnuh.wstat <- cnuh.sum$waldtest[1]
 
-plot(cnuh.bladder.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Disease-Specific Survival Predicted by 94 Ovarian Genes\n Bladder Cancer CNUH Cohort (GSE13507)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
-par(font=1) 
-legend("bottomleft", legend=c("High", "Low", "p-value = 1.18e-07"), fill= c("red", "blue", "white"),border="white", col=c("red", "blue", "black"))
+# plot(cnuh.bladder.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Disease-Specific Survival Predicted by 94 Ovarian Genes\n Bladder Cancer CNUH Cohort (GSE13507)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+# par(font=1) 
+# legend("bottomleft", legend=c("High", "Low", "p-value = 1.18e-07"), fill= c("red", "blue", "white"),border="white", col=c("red", "blue", "black"))
 
 ## Permutation test and p-value generation
 set.seed(2110)
 ## log likelihood
-cnuh.perm <- getKM.permuted.LRT.v2(cnuh, nPerm = 10, cnuh.outcome, cnuh.time)
+cnuh.perm <- getKM.permuted.LRT.v2(cnuh, nPerm = 1000, cnuh.outcome, cnuh.time)
 cnuh.pp <- getPermutedPval(cnuh.stat, cnuh.perm$lltest)
 ## wald
 cnuh.ppw <- getPermutedPval(cnuh.wstat, cnuh.perm$wtest)
@@ -174,13 +174,13 @@ lindgren.sum <- summary(lindgren.cox)
 lindgren.stat <- lindgren.sum$logtest[1]
 lindgren.wstat <- lindgren.sum$waldtest[1]
 
-plot(lindgren.bladder.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Disease-Specific Survival Predicted by 94 Ovarian Genes\n Bladder Cancer Lindgren Cohort (GSE19915)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
-par(font=1) 
-legend("bottomleft", legend=c("High", "Low", "p-value = 6.54e-06"), fill = c("red", "blue", "white"))
+# plot(lindgren.bladder.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Disease-Specific Survival Predicted by 94 Ovarian Genes\n Bladder Cancer Lindgren Cohort (GSE19915)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+# par(font=1) 
+# legend("bottomleft", legend=c("High", "Low", "p-value = 6.54e-06"), fill = c("red", "blue", "white"))
 
 set.seed(2110)
 ## log likelihood
-lindgren.perm <- getKM.permuted.LRT.v2(lindgren, nPerm = 10, Lindgren.outcome, Lindgren.time)
+lindgren.perm <- getKM.permuted.LRT.v2(lindgren, nPerm = 1000, Lindgren.outcome, Lindgren.time)
 lindgren.pp <- getPermutedPval(lindgren.stat, lindgren.perm$lltest)
 ## wald
 lindgren.ppw <- getPermutedPval(lindgren.wstat, lindgren.perm$wtest)
@@ -242,12 +242,12 @@ cit.sum <- summary(cit.cox)
 cit.stat <- cit.sum$logtest[1]
 cit.wstat <- cit.sum$waldtest[1]
 
-plot(cit.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Colorectal Cancer CIT (GSE39582)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
-par(font=1) 
-legend("bottomleft", legend=c("High", "Low", "p-value = 5.81e-06"), fill = c("red", "blue", "white"))
+# plot(cit.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Colorectal Cancer CIT (GSE39582)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+# par(font=1) 
+# legend("bottomleft", legend=c("High", "Low", "p-value = 5.81e-06"), fill = c("red", "blue", "white"))
 
 set.seed(2110)
-cit.perm <- getKM.permuted.LRT.v2(cit.2, nPerm = 10, cit.pheno.2$RFS.event, cit.pheno.2$RFS.delay)
+cit.perm <- getKM.permuted.LRT.v2(cit.2, nPerm = 1000, cit.pheno.2$RFS.event, cit.pheno.2$RFS.delay)
 ## log likelihood
 cit.pp <- getPermutedPval(cit.stat, cit.perm$lltest)
 ## wald
@@ -318,12 +318,12 @@ Sboner.sum <- summary(Sboner.cox)
 Sboner.stat <- Sboner.sum$logtest[1]
 Sboner.wstat <- Sboner.sum$waldtest[1]
 
-plot(Sboner.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Prostate Cancer Sboner (GSE16560)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
-par(font=1) 
-legend("bottomleft", legend=c("High", "Low", "p-value = 1.29e-09"), fill = c("red", "blue", "white"))
+# plot(Sboner.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Prostate Cancer Sboner (GSE16560)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+# par(font=1) 
+# legend("bottomleft", legend=c("High", "Low", "p-value = 1.29e-09"), fill = c("red", "blue", "white"))
 
 set.seed(2110)
-Sboner.perm <- getKM.permuted.LRT.v2(Sboner.2, nPerm = 10, pd.Sboner$event, pd.Sboner$time)
+Sboner.perm <- getKM.permuted.LRT.v2(Sboner.2, nPerm = 1000, pd.Sboner$event, pd.Sboner$time)
 ## log likelihood
 Sboner.pp <- getPermutedPval(Sboner.stat, Sboner.perm$lltest)
 ## wald
@@ -384,11 +384,11 @@ Bos.sum <- summary(Bos.cox)
 Bos.stat <- Bos.sum$logtest[1]
 Bos.wstat <- Bos.sum$waldtest[1]
 
-plot(Bos.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Breast Cancer Bos (GSE12276)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
-legend("topright", legend=c("High", "Low", "p-value = 3.44e-07"), fill= c("red", "blue", "white"))
+# plot(Bos.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Breast Cancer Bos (GSE12276)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+# legend("topright", legend=c("High", "Low", "p-value = 3.44e-07"), fill= c("red", "blue", "white"))
 
 set.seed(2110)
-Bos.perm <- getKM.permuted.LRT.v2(Sboner.2, nPerm = 10, pd.Sboner$event, pd.Sboner$time)
+Bos.perm <- getKM.permuted.LRT.v2(Sboner.2, nPerm = 1000, pd.Sboner$event, pd.Sboner$time)
 ## log likelihood
 Bos.pp <- getPermutedPval(Bos.stat, Bos.perm$lltest)
 ## wald
@@ -448,11 +448,11 @@ Duke.sum <- summary(Duke.cox)
 Duke.stat <- Duke.sum$logtest[1]
 Duke.wstat <- Duke.sum$waldtest[1]
 
-plot(Duke.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Lung Cancer Duke (GSE3141)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
-legend("bottomleft", legend=c("High", "Low", "p-value = 3.61e-10"), fill= c("red", "blue", "white"))
+# plot(Duke.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main="Survival Predicted By 94 Ovarian Genes\n Lung Cancer Duke (GSE3141)", lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1, cex.lab=1, cex.axis=1)
+# legend("bottomleft", legend=c("High", "Low", "p-value = 3.61e-10"), fill= c("red", "blue", "white"))
 
 set.seed(2110)
-Duke.perm <- getKM.permuted.LRT.v2(Duke2, nPerm = 10, as.numeric(forAnalysis[,"event"]), as.numeric(forAnalysis[,"time"]))
+Duke.perm <- getKM.permuted.LRT.v2(Duke2, nPerm = 1000, as.numeric(forAnalysis[,"event"]), as.numeric(forAnalysis[,"time"]))
 ## log likelihood
 Duke.pp <- getPermutedPval(Duke.stat, Duke.perm$lltest)
 ## wald
@@ -473,7 +473,7 @@ Duke.distw <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$wtest)) +
 ## KM Plots for manuscript
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-png(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/KM_curves_Manuscript.png", height = 15, width = 15, res = 400, units = "in")
+png(filename = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/KM_curves_Manuscript.png", height = 15, width = 15, res = 400, units = "in")
 ## set param to 3 rows and 2 columns
 par(mfrow=c(3,2))
 ## cnuh bladder
@@ -501,23 +501,34 @@ legend("bottomleft", legend=c("High", "Low", "p-value = 3.61e-10"), fill= c("red
 dev.off()
 ```
 
+![Figure 1. KM curves](/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/KM_curves_Manuscript.png)
+
 ## Plot Distributions of permuted statistics
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
+png(filename = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/permutationHistograms_Manuscript.png", height = 15, width = 18, res = 400, units = "in")
 multiplot(cnuh.dist, cnuh.dist, lindgren.dist, lindgren.distw, cit.dist, cit.distw, Sboner.dist, Sboner.distw, Bos.dist, Bos.distw, Duke.dist, Duke.distw, cols = 4)
+dev.off()
 ```
+
+![Figure 2. Permutation histograms](/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/permutationHistograms_Manuscript.png)
 
 ## Summary table of p-values from Cox PH modeling
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
+options(scipen=999)
 tissue <- c("Bladder", "Bladder", "Colorectal", "Prostate", "Breast", "Lung")
 cohort <- c("GSE13507C", "GSE19915", "GSE39582", "GSE16560", "GSE12276", "GSE3141")
 llpval <- c(cnuh.sum$logtest[3], lindgren.sum$logtest[3], cit.sum$logtest[3], Sboner.sum$logtest[3], Bos.sum$logtest[3], Duke.sum$logtest[3])
 wpval <- c(cnuh.sum$waldtest[3], lindgren.sum$waldtest[3], cit.sum$waldtest[3], Sboner.sum$waldtest[3], Bos.sum$waldtest[3], Duke.sum$waldtest[3])
 modelTable <- data.frame(tissue, cohort, llpval, wpval)
+modelTable$llpval <- ifelse(modelTable$llpval < 0.0001, "<0.0001", round(modelTable$llpval, 3))
+modelTable$wpval <- ifelse(modelTable$wpval < 0.0001, "<0.0001", round(modelTable$wpval, 4))
 colnames(modelTable) <- c("Cancer Type", "Dataset", "Log Likelihood P-Value", "Wald P-Value")
 kable(modelTable, caption = "Table 2. Model P-values")
 ```
+
+## Summary table of p-values from permutation tests
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #save(cnuh.pp, lindgren.pp, cit.pp, Sboner.pp, Bos.pp, Duke.pp, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults.RData")
