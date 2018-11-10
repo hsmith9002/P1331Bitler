@@ -36,6 +36,7 @@ For each cohort and cancer type, candidate genes were able to significantly pred
 rm(list = ls())
 options(stringsAsFactors = FALSE)
 library(knitr)
+library(beepr)
 setwd("/Users/harry/Documents/CIDA/Projects/P1331Bitler/code")
 dirs <- "/Users/harry/Documents/CIDA/Projects/P1331Bitler/"
 '%!in%' <- function(x,y)!('%in%'(x,y))
@@ -81,18 +82,6 @@ fit <- function(cnuh, cnuh.outcome, cnuh.time, cancer, tcga, legpos) {
   plot(cnuh.bladder.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main=paste("Disease-Specific Survival Predicted by", dim(cnuh)[1], "Ovarian Genes\n", cancer, "Cancer -", tcga), lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1.4, cex.lab=1.4, cex.axis=1.4)
   par(font=1) 
   legend(legpos, legend=c("High", "Low", paste("p-value =", p)), fill= c("red", "blue", "white"),border="white", col=c("red", "blue", "black"), cex = 1.4)
-  
-  ## Plot distribution of permuted stats
-library(ggplot2)
-Duke.dist <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$lltest)) + 
-  geom_histogram(color="black", fill="white") +
-  xlab("Log Likelihood Statistic") + ylab("Count") +
-  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
-Duke.distw <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$wtest)) + 
-  geom_histogram(color="black", fill="white") +
-  xlab("Log Wald Statistic") + ylab("Count") +
-  ggtitle("Permuted Wald  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
-  
   return(list("lltest" = llstat, "wstat" = wstat, "llpval" = p, "wpval" = pw))
 }
 ```
@@ -113,9 +102,11 @@ skcm.stat <- fit(skcm.exp, skcm.outcome, skcm.time, cancer = "Skin", tcga = "TCG
 dev.off()
 ```
 
+![Figure 1. KM curves](/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/TCGA_KM_curves_Manuscript.png)
+
 ## permutation testing
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE, eval=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ## source permutation functions from LV
 source("permutationFunctions.forHarry.R")
 set.seed(2110)
@@ -139,8 +130,78 @@ spp <- getPermutedPval(skcm.stat$lltest, skcm.perm$lltest)
 sppw <- getPermutedPval(skcm.stat$wtest, skcm.perm$wtest)
 
 ## Save and load perm p-value results to save time when knitting
-#save(kcpp, kppp, cpp, bpp, lpp, spp, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults_TCGA.RData")
+save(kcpp, kppp, cpp, bpp, lpp, spp, kcppw, kpppw, cppw, bppw, lppw, sppw, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults_TCGA.RData")
 ```
+
+## Plot Distributions of permuted statistics
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## Plot distribution of permuted stats
+library(ggplot2)
+## KIRC
+kirc.dist <-ggplot(as.data.frame(kirc.perm), aes(x=kirc.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Kidney Cancer TCGA-KIRC")
+kirc.distw <-ggplot(as.data.frame(kirc.perm), aes(x=kirc.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Kidney Cancer TCGA-KIRC")
+## KIRP
+kirp.dist <-ggplot(as.data.frame(kirp.perm), aes(x=kirp.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Kidney Cancer TCGA-KIRP")
+kirp.distw <-ggplot(as.data.frame(kirp.perm), aes(x=kirp.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Kidney Cancer TCGA-KIRP")
+## COAD
+coad.dist <-ggplot(as.data.frame(coad.perm), aes(x=coad.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Colorectal Cancer TCGA-COAD")
+coad.distw <-ggplot(as.data.frame(coad.perm), aes(x=coad.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Colorectal Cancer TCGA-COAD")
+## BRCA
+brca.dist <-ggplot(as.data.frame(brca.perm), aes(x=brca.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Breast Cancer TCGA-BRCA")
+brca.distw <-ggplot(as.data.frame(brca.perm), aes(x=brca.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Breast Cancer TCGA-BRCA")
+## LGG
+lgg.dist <-ggplot(as.data.frame(lgg.perm), aes(x=lgg.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Brain Cancer TCGA-LGG")
+lgg.distw <-ggplot(as.data.frame(lgg.perm), aes(x=lgg.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Brain Cancer TCGA-LGG")
+## SKCM
+skcm.dist <-ggplot(as.data.frame(skcm.perm), aes(x=skcm.perm$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Skin Cancer TCGA-SKCM")
+skcm.distw <-ggplot(as.data.frame(skcm.perm), aes(x=skcm.perm$wtest)) + 
+  geom_histogram(color="black", fill="white") +
+  xlab("Wald Statistic") + ylab("Count") +
+  ggtitle("Permuted Wald  \n Statistic Distrubution \n Skin Cancer TCGA-SKCM")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+source("multiplot.R")
+png(filename = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/TCGApermutationHistograms_Manuscript.png", height = 15, width = 18, res = 400, units = "in")
+multiplot(kirc.dist, kirc.distw, kirp.dist, kirp.distw, coad.dist, coad.distw, brca.dist, brca.distw, lgg.dist, lgg.distw, skcm.dist, skcm.distw, cols = 4)
+dev.off()
+```
+
+![Figure 2. Permutation histograms](/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/TCGApermutationHistograms_Manuscript.png)
 
 ## Summary table of p-values from Cox PH modeling
 
@@ -167,6 +228,7 @@ pval <- c(kcpp, kppp, cpp, bpp, lpp, spp)
 perm.rslts <- data.frame("Cancer Type" = ctype, "Dataset" = dset, "P-value" = pval)
 colnames(perm.rslts) <- c("Cancer Type", "Dataset", "P-value")
 kable(perm.rslts, caption = "Table 3. Permutation P-values")
+
  #Generate table of perm results
 ctypew <- c("Kidney", "Kidney", "Colorectal", "Breast", "Brain", "Skin")
 dsetw <- c("TCGA-KIRC", "TCGA-KIRP", "TCGA-COAD", "TCGA-BRCA", "TCGA-LGG", "TCGA-SKCM")

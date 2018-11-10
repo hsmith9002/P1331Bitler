@@ -135,7 +135,7 @@ cnuh.dist <-ggplot(as.data.frame(cnuh.perm), aes(x=cnuh.perm$lltest)) +
   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Bladder Cancer CNUH Cohort (GSE13507)")
 cnuh.distw <-ggplot(as.data.frame(cnuh.perm), aes(x=cnuh.perm$wtest)) + 
   geom_histogram(color="black", fill="white") +
-  xlab("Log Wald Statistic") + ylab("Count") +
+  xlab("Wald Statistic") + ylab("Count") +
   ggtitle("Permuted Wald  \n Statistic Distrubution \n Bladder Cancer CNUH Cohort (GSE13507)")
 ```
 
@@ -194,7 +194,7 @@ lindgren.dist <-ggplot(as.data.frame(lindgren.perm), aes(x=lindgren.perm$lltest)
   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Bladder Cancer Lindgren Cohort (GSE19915)")
 lindgren.distw <-ggplot(as.data.frame(lindgren.perm), aes(x=lindgren.perm$wtest)) + 
   geom_histogram(color="black", fill="white") +
-  xlab("Log Wald Statistic") + ylab("Count") +
+  xlab("Wald Statistic") + ylab("Count") +
   ggtitle("Permuted Wald  \n Statistic Distrubution \n Bladder Cancer Lindgren Cohort (GSE19915)")
 ```
 
@@ -262,7 +262,7 @@ cit.dist <-ggplot(as.data.frame(cit.perm), aes(x=cit.perm$lltest)) +
   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Colorectal Cancer CIT (GSE39582)")
 cit.distw <-ggplot(as.data.frame(cit.perm), aes(x=cit.perm$wtest)) + 
   geom_histogram(color="black", fill="white") +
-  xlab("Log Wald Statistic") + ylab("Count") +
+  xlab("Wald Statistic") + ylab("Count") +
   ggtitle("Permuted Wald  \n Statistic Distrubution \n Colorectal Cancer CIT (GSE39582)")
 ```
 
@@ -338,7 +338,7 @@ Sboner.dist <-ggplot(as.data.frame(Sboner.perm), aes(x=Sboner.perm$lltest)) +
   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Prostate Cancer Sboner (GSE16560)")
 Sboner.distw <-ggplot(as.data.frame(Sboner.perm), aes(x=Sboner.perm$wtest)) + 
   geom_histogram(color="black", fill="white") +
-  xlab("Log Wald Statistic") + ylab("Count") +
+  xlab("Wald Statistic") + ylab("Count") +
   ggtitle("Permuted Wald  \n Statistic Distrubution \n Prostate Cancer Sboner (GSE16560)")
 ```
 
@@ -403,7 +403,7 @@ Bos.dist <-ggplot(as.data.frame(Bos.perm), aes(x=Bos.perm$lltest)) +
   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Breast Cancer Bos (GSE12276)")
 Bos.distw <-ggplot(as.data.frame(Bos.perm), aes(x=Bos.perm$wtest)) + 
   geom_histogram(color="black", fill="white") +
-  xlab("Log Wald Statistic") + ylab("Count") +
+  xlab("Wald Statistic") + ylab("Count") +
   ggtitle("Permuted Wald  \n Statistic Distrubution \n Breast Cancer Bos (GSE12276)")
 ```
 
@@ -467,7 +467,7 @@ Duke.dist <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$lltest)) +
   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
 Duke.distw <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$wtest)) + 
   geom_histogram(color="black", fill="white") +
-  xlab("Log Wald Statistic") + ylab("Count") +
+  xlab("Wald Statistic") + ylab("Count") +
   ggtitle("Permuted Wald  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
 ```
 
@@ -508,7 +508,7 @@ dev.off()
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 png(filename = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/permutationHistograms_Manuscript.png", height = 15, width = 18, res = 400, units = "in")
-multiplot(cnuh.dist, cnuh.dist, lindgren.dist, lindgren.distw, cit.dist, cit.distw, Sboner.dist, Sboner.distw, Bos.dist, Bos.distw, Duke.dist, Duke.distw, cols = 4)
+multiplot(cnuh.dist, cnuh.distw, lindgren.dist, lindgren.distw, cit.dist, cit.distw, Sboner.dist, Sboner.distw, Bos.dist, Bos.distw, Duke.dist, Duke.distw, cols = 4)
 dev.off()
 ```
 
