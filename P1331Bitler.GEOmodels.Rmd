@@ -37,6 +37,7 @@ The 94 candidate genes were able to significantly predict survival for all cohor
 rm(list = ls())
 options(stringsAsFactors = FALSE)
 library(knitr)
+library(beepr)
 setwd("/Users/harry/Documents/CIDA/Projects/P1331Bitler/code")
 source("permutationFunctions.forHarry.R")
 source("multiplot.R")
@@ -531,7 +532,7 @@ kable(modelTable, caption = "Table 2. Model P-values")
 ## Summary table of p-values from permutation tests
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-#save(cnuh.pp, lindgren.pp, cit.pp, Sboner.pp, Bos.pp, Duke.pp, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults.RData")
+#save(cnuh.pp, lindgren.pp, cit.pp, Sboner.pp, Bos.pp, Duke.pp, cnuh.ppw, lindgren.ppw, cit.ppw, Sboner.ppw, Bos.ppw, Duke.ppw, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults.RData")
 #load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults.RData")
 #Generate table of perm results
 ctype <- c("Bladder", "Bladder", "Colorectal", "Prostate", "Breast", "Lung")
@@ -548,4 +549,8 @@ pvalw <- c(cnuh.ppw, lindgren.ppw, cit.ppw, Sboner.ppw, Bos.ppw, Duke.ppw)
 perm.rsltsw <- data.frame("Cancer Type" = ctypew, "Dataset" = dsetw, "P-value" = pvalw)
 colnames(perm.rsltsw) <- c("Cancer Type", "Dataset", "P-value")
 kable(perm.rsltsw, caption = "Table 4. Permutation P-values - Wald")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+beep("mario")
 ```
