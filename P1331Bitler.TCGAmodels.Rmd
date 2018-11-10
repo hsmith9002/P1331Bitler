@@ -1,0 +1,152 @@
+---
+title: "P1331Bitler.TCGAmodels"
+author: "Harry Smith"
+date: "6/28/2018"
+output: html_document
+---
+
+##Introduction
+
+The goal of this analysis is to verify whether or not the candidate genes from Ben Bilter can predict cancer survival. Candidate genes were provided to me by Ben on 04/03/2018. Validation data sets were downloaded from the TCGA database, and cleaned by me. Validation data sets encompass kidney, colorectal, and breast cancers. Potential negative control data sets include brain and skin cancer. All are summarized in Table 1.  
+
+Table 1
+
+| Cancer | TCGA ID | Data Type | 
+| :----: | :----: |:-----:|
+| Kidney | TCGA-KIRC | Expected counts | 
+| Kidney | TCGA-KIRP | Expected counts  | 
+| Colorectal | TCGA-COAD | Expected counts  | 
+| Breast | TCGA-BRCA | Expected counts  |
+| Brain | TCGA-LGG | Expected counts  | 
+| Skin | TCGA-SKCM | Expected counts  | 
+
+##Methods
+
+Gene-level expression data in the form of raw read counts were downloaded and merged from the TCGA database. For each cohort, expression data were downloaded at the sample level and then merged by Ensembl gene ID. Data sets were chosen based on cancer type (recommended by Ben), and whether or not the cohort had at least 25 'events'. Also, brain and ski cancer were not expected to have any associations to the candidate genes and were therefore chosen to analyze as negative controls.  For quality purposes, genes in each of the data sets were filtered based on expression levels. For all data sets genes were retained if they had an average of at least 10 reads across all samples. Original data sets contained ~30,000 unique Ensembl gene IDs, and after filtering, all contained ~15,000 unique Ensembl gene IDs. For each cohort, to extract expression values for each of the candidate genes expected to predict survival, expression data was extracted based on matching gene names from the hg38 Ensembl annotation database. Gene names were mapped to their associated Ensembl gene IDs, and these IDs were then used to subset the expression data from each experiment listed in table 1. 
+Modeling survival and generating Kaplan-Meier curves were done in 3 steps: 1)The first step was to fit a Cox proportional hazard model for each gene and extract the coefficient. 2) A gene signature score was calculated by taking the weighted sum of the candidate genes using the coefficient from step 1 as the respective weights.  We then used the median of the gene signature distribution to divide the scores into high (above median) and low (below median) scores. 3) The dichotomous description of gene signature score (high or low gene signature score) was then used as a predictor to fit new Cox proportional hazard models and generate a Kaplan-Meier curve. P-values were taken from the log-likelihood statistic from the Cox proportional hazard models. For verification, we used permuted a subset of random expression and random outcome (time, vital status) values, and broke the relationship between expression and outcome. This was done 1000 times, and for each permuted data set we modeled survival as described for the original analysis, and generated a distribution of log-likelihood statistics. We then calculated p-values for each cohort's permutation analysis, which describes the proportion of times the permuted likelihood test was more extreme (i.e. more significant) than the log-likelihood generated from the original analysis. 
+
+##Results
+
+Due to the filtering step described above for each of the cohort data sets, there was not a static number of genes used in every analysis. In no data set were all 108 genes retained, but for most data sets at least 100 of the 108 genes were retained and used in the respective analysis. 
+For each cohort and cancer type, candidate genes were able to significantly predict survival except for TCGA-COAD-Colorectal cancer. Interestingly, the candidate genes did significantly predict survival in our negative control data sets (brain and skin cancer). P-values from the cox proportional hazard model log likelihood tests are displayed in the legend of the Kaplan-Meier plot for each cohort. All of the Kaplan-Mayer curves show good separation of survival based on the gene signature scores (survival estimates for high scores are in red and low scores are in blue), except of course the curve for TCGA-COAD-colorectal cancer which shows multiple overlaps. Something to be weary of, notice that the candidate gene list also predicts survival for the negative control data sets (Brain & skin cancers). The results for the permutation test are summarized in table 2. After breaking the relationship between expression and outcome, none of our prediction models perform significantly better than the permuted models.
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Set up workspace
+rm(list = ls())
+options(stringsAsFactors = FALSE)
+library(knitr)
+setwd("/Users/harry/Documents/CIDA/Projects/P1331Bitler/code")
+dirs <- "/Users/harry/Documents/CIDA/Projects/P1331Bitler/"
+'%!in%' <- function(x,y)!('%in%'(x,y))
+library(survival)
+library(simPH)
+
+## load datasets
+load(file = paste(dirs, "dataProcessed/TCGA-KIRC/kirc.RData", sep = ""))
+load(file = paste(dirs, "dataProcessed/TCGA-KIRP/kirp.RData", sep = ""))
+load(file = paste(dirs, "dataProcessed/TCGA-COAD/coad.RData", sep = ""))
+load(file = paste(dirs, "dataProcessed/TCGA-BRCA/brca.RData", sep = ""))
+load(file = paste(dirs, "dataProcessed/TCGA-LGG/lgg.RData", sep = ""))
+load(file = paste(dirs, "dataProcessed/TCGA-SKCM/skcm.RData", sep = ""))
+
+## Build function
+fit <- function(cnuh, cnuh.outcome, cnuh.time, cancer, tcga, legpos) {
+  #table(colnames(cit.2)==cit.pheno.2[,"Accession"])
+  
+  cox.byGene = apply(cnuh, 1, function(a) coxph(Surv(cnuh.time, cnuh.outcome) ~ a)$coefficients)
+  
+  ##Step2: Get Sample Scores;
+  #table(names(cox.byGene)==rownames(cnuh))
+  cnuh.sample.scores = apply(cnuh, 2, function(a) sum(a*cox.byGene))
+  #hist(cnuh.sample.scores)
+  
+  cnuh.high = names(cnuh.sample.scores[which(cnuh.sample.scores > median(cnuh.sample.scores))])
+  cnuh.low = names(cnuh.sample.scores[which(cnuh.sample.scores <= median(cnuh.sample.scores))])
+  
+  ##Step3: Get Kaplan-Meier Plots;
+  bladder.signature = c()
+  for(i in 1:ncol(cnuh)){
+    if(colnames(cnuh)[i] %in% cnuh.high){bladder.signature[i]="Bladder High"}else{bladder.signature[i]="Bladder Low"}
+  }
+  
+  cnuh.bladder.surv <- survfit(Surv(cnuh.time, cnuh.outcome)~ as.factor(bladder.signature), conf.type="none")
+  cnuh.cox <- coxph(Surv(cnuh.time, cnuh.outcome)~ as.factor(bladder.signature))
+  cnuh.sum <- summary(cnuh.cox)
+  llstat <- cnuh.sum$logtest[1]
+  wstat <- cnuh.sum$waldtest[1]
+  p <- round(cnuh.sum$logtest[3], 4)
+  pw <- round(cnuh.sum$waldtest[3], 4)
+  
+  plot(cnuh.bladder.surv, col=c("red", "blue"),xlab="Time", ylab="Survival Probability", main=paste("Disease-Specific Survival Predicted by", dim(cnuh)[1], "Ovarian Genes\n", cancer, "Cancer -", tcga), lwd=3.5, font=1, font.lab=1, cex.main=1.5, cex=1.4, cex.lab=1.4, cex.axis=1.4)
+  par(font=1) 
+  legend(legpos, legend=c("High", "Low", paste("p-value =", p)), fill= c("red", "blue", "white"),border="white", col=c("red", "blue", "black"), cex = 1.4)
+  return(list("lltest" = llstat, "wstat" = wstat, "llpval" = p, "wpval" = pw))
+}
+```
+
+## Fit Models and generate KM plots
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+png(filename = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/TCGA_KM_curves_Manuscript.png", height = 15, width = 15, res = 400, units = "in")
+## set param to 3 rows and 2 columns
+par(mfrow=c(3,2))
+## Fit models
+kirc.stat <- fit(kirc.exp, kirc.outcome, kirc.time, cancer = "Kidney", tcga = "TCGA-KIRC", legpos = "topright")
+kirp.stat <- fit(kirp.exp, kirp.outcome, kirp.time, cancer = "Kidney", tcga = "TCGA-KIRP", legpos = "topright")
+coad.stat <- fit(coad.exp, coad.outcome, coad.time, cancer = "Colorectal", tcga = "TCGA-COAD", legpos = "topright")
+brca.stat <- fit(brca.exp, brca.outcome, brca.time, cancer = "Breast", tcga = "TCGA-BRCA", legpos = "topright")
+lgg.stat <- fit(lgg.exp, lgg.outcome, lgg.time, cancer = "Brain", tcga = "TCGA-LGG", legpos = "topright")
+skcm.stat <- fit(skcm.exp, skcm.outcome, skcm.time, cancer = "Skin", tcga = "TCGA-SKCM", legpos = "topright")
+dev.off()
+```
+
+## permutation testing
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, eval=FALSE}
+## source permutation functions from LV
+source("permutationFunctions.forHarry.R")
+set.seed(2110)
+kirc.perm <- getKM.permuted.LRT.v2(kirc.exp, nPerm = 1000, kirc.outcome, kirc.time)
+kcpp <- getPermutedPval(kirc.stat$lltest, kirc.perm$lltest)
+kcppw <- getPermutedPval(kirc.stat$wtest, kirc.perm$wtest)
+kirp.perm <- getKM.permuted.LRT.v2(kirp.exp, nPerm = 1000, kirp.outcome, kirp.time)
+kppp <- getPermutedPval(kirp.stat$lltest, kirp.perm$lltest)
+kpppw <- getPermutedPval(kirp.stat$wtest, kirp.perm$wtest)
+coad.perm <- getKM.permuted.LRT.v2(coad.exp, nPerm = 1000, coad.outcome, coad.time)
+cpp <- getPermutedPval(coad.stat$lltest, coad.perm$lltest)
+cppw <- getPermutedPval(coad.stat$wtest, coad.perm$wtest)
+brca.perm <- getKM.permuted.LRT.v2(brca.exp, nPerm = 1000, brca.outcome, brca.time)
+bpp <- getPermutedPval(brca.stat$lltest, brca.perm$lltest)
+bppw <- getPermutedPval(brca.stat$wtest, brca.perm$wtest)
+lgg.perm <- getKM.permuted.LRT.v2(lgg.exp, nPerm = 1000, lgg.outcome, lgg.time)
+lpp <- getPermutedPval(lgg.stat$lltest, lgg.perm$lltest)
+lppw <- getPermutedPval(lgg.stat$wtest, lgg.perm$wtest)
+skcm.perm <- getKM.permuted.LRT.v2(skcm.exp, nPerm = 1000, skcm.outcome, skcm.time)
+spp <- getPermutedPval(skcm.stat$lltest, skcm.perm$lltest)
+sppw <- getPermutedPval(skcm.stat$wtest, skcm.perm$wtest)
+
+## Save and load perm p-value results to save time when knitting
+#save(kcpp, kppp, cpp, bpp, lpp, spp, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults_TCGA.RData")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults_TCGA.RData")
+
+#Generate table of perm results
+ctype <- c("Kidney", "Kidney", "Colorectal", "Breast", "Brain", "Skin")
+dset <- c("TCGA-KIRC", "TCGA-KIRP", "TCGA-COAD", "TCGA-BRCA", "TCGA-LGG", "TCGA-SKCM")
+pval <- c(kcpp, kppp, cpp, bpp, lpp, spp)
+perm.rslts <- data.frame("Cancer Type" = ctype, "Dataset" = dset, "P-value" = pval)
+colnames(perm.rslts) <- c("Cancer Type", "Dataset", "P-value")
+kable(perm.rslts, caption = "Table 2. Permutation P-values")
+```
+
+
+
+
+
+
+
+
+
