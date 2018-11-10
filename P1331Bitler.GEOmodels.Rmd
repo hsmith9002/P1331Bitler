@@ -539,5 +539,13 @@ dset <- c("GSE13507C", "GSE19915", "GSE39582", "GSE16560", "GSE12276", "GSE3141"
 pval <- c(cnuh.pp, lindgren.pp, cit.pp, Sboner.pp, Bos.pp, Duke.pp)
 perm.rslts <- data.frame("Cancer Type" = ctype, "Dataset" = dset, "P-value" = pval)
 colnames(perm.rslts) <- c("Cancer Type", "Dataset", "P-value")
-kable(perm.rslts, caption = "Table 3. Permutation P-values")
+kable(perm.rslts, caption = "Table 3. Permutation P-values - Log Likelihood")
+
+#Generate table of perm results
+ctypew <- c("Bladder", "Bladder", "Colorectal", "Prostate", "Breast", "Lung")
+dsetw <- c("GSE13507C", "GSE19915", "GSE39582", "GSE16560", "GSE12276", "GSE3141")
+pvalw <- c(cnuh.ppw, lindgren.ppw, cit.ppw, Sboner.ppw, Bos.ppw, Duke.ppw)
+perm.rsltsw <- data.frame("Cancer Type" = ctypew, "Dataset" = dsetw, "P-value" = pvalw)
+colnames(perm.rsltsw) <- c("Cancer Type", "Dataset", "P-value")
+kable(perm.rsltsw, caption = "Table 4. Permutation P-values - Wald")
 ```
