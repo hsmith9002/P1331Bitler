@@ -112,22 +112,22 @@ source("permutationFunctions.forHarry.R")
 set.seed(2110)
 kirc.perm <- getKM.permuted.LRT.v2(kirc.exp, nPerm = 1000, kirc.outcome, kirc.time)
 kcpp <- getPermutedPval(kirc.stat$lltest, kirc.perm$lltest)
-kcppw <- getPermutedPval(kirc.stat$wtest, kirc.perm$wtest)
+kcppw <- getPermutedPval(kirc.stat$wstat, kirc.perm$wtest)
 kirp.perm <- getKM.permuted.LRT.v2(kirp.exp, nPerm = 1000, kirp.outcome, kirp.time)
 kppp <- getPermutedPval(kirp.stat$lltest, kirp.perm$lltest)
-kpppw <- getPermutedPval(kirp.stat$wtest, kirp.perm$wtest)
+kpppw <- getPermutedPval(kirp.stat$wstat, kirp.perm$wtest)
 coad.perm <- getKM.permuted.LRT.v2(coad.exp, nPerm = 1000, coad.outcome, coad.time)
 cpp <- getPermutedPval(coad.stat$lltest, coad.perm$lltest)
-cppw <- getPermutedPval(coad.stat$wtest, coad.perm$wtest)
+cppw <- getPermutedPval(coad.stat$wstat, coad.perm$wtest)
 brca.perm <- getKM.permuted.LRT.v2(brca.exp, nPerm = 1000, brca.outcome, brca.time)
 bpp <- getPermutedPval(brca.stat$lltest, brca.perm$lltest)
-bppw <- getPermutedPval(brca.stat$wtest, brca.perm$wtest)
+bppw <- getPermutedPval(brca.stat$wstat, brca.perm$wtest)
 lgg.perm <- getKM.permuted.LRT.v2(lgg.exp, nPerm = 1000, lgg.outcome, lgg.time)
 lpp <- getPermutedPval(lgg.stat$lltest, lgg.perm$lltest)
-lppw <- getPermutedPval(lgg.stat$wtest, lgg.perm$wtest)
+lppw <- getPermutedPval(lgg.stat$wstat, lgg.perm$wtest)
 skcm.perm <- getKM.permuted.LRT.v2(skcm.exp, nPerm = 1000, skcm.outcome, skcm.time)
 spp <- getPermutedPval(skcm.stat$lltest, skcm.perm$lltest)
-sppw <- getPermutedPval(skcm.stat$wtest, skcm.perm$wtest)
+sppw <- getPermutedPval(skcm.stat$wstat, skcm.perm$wtest)
 
 ## Save and load perm p-value results to save time when knitting
 save(kcpp, kppp, cpp, bpp, lpp, spp, kcppw, kpppw, cppw, bppw, lppw, sppw, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults_TCGA.RData")
@@ -219,7 +219,7 @@ kable(modelTable, caption = "Table 2. Model P-values")
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-#load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults_TCGA.RData")
+load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults_TCGA.RData")
 
 #Generate table of perm results
 ctype <- c("Kidney", "Kidney", "Colorectal", "Breast", "Brain", "Skin")
