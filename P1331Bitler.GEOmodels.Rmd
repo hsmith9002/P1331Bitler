@@ -397,7 +397,7 @@ Bos.wstat <- Bos.sum$waldtest[1]
 # legend("topright", legend=c("High", "Low", "p-value = 3.44e-07"), fill= c("red", "blue", "white"))
 
 set.seed(2110)
-Bos.perm <- getKM.permuted.LRT.v2(Sboner.2, nPerm = 1000, pd.Sboner$event, pd.Sboner$time)
+Bos.perm <- getKM.permuted.LRT.v2(Bos2, nPerm = 1000, Bos.pd[,"event"], Bos.pd[,"survivaTime.months"])
 ## log likelihood
 Bos.pp <- getPermutedPval(Bos.stat, Bos.perm$lltest)
 ## wald
