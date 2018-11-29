@@ -106,7 +106,7 @@ dev.off()
 
 ## permutation testing
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, eval=FALSE}
 ## source permutation functions from LV
 source("permutationFunctions.forHarry.R")
 set.seed(2110)
@@ -131,12 +131,35 @@ sppw <- getPermutedPval(skcm.stat$wstat, skcm.perm$wtest)
 
 ## Save and load perm p-value results to save time when knitting
 #save(kcpp, kppp, cpp, bpp, lpp, spp, kcppw, kpppw, cppw, bppw, lppw, sppw, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults_TCGA.RData")
-save(kirc.perm, kirp.perm, coad.perm, brca.perm, lgg.perm, skcm.perm, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/permResults_TCGA.RData")
+#save(kirc.perm, kirp.perm, coad.perm, brca.perm, lgg.perm, skcm.perm, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/permResults_TCGA.RData")
+```
+
+## Random gene permutation testing
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+## source permutation functions from LV
+source("permutationFunctions.forHarry.R")
+set.seed(2110)
+kirc.rgp <- getKM.permuted.LRT.v3(kirc.filtfull, dim(kirc.exp)[1], 1000, kirc.outcome, kirc.time)
+kcrgpval <- getPermutedPval(kirc.stat$lltest, kirc.rgp$lltest)
+kirp.rgp <- getKM.permuted.LRT.v3(kirp.filtfull, dim(kirp.exp)[1], 1000, kirp.outcome, kirp.time)
+kprgpval <- getPermutedPval(kirp.stat$lltest, kirp.rgp$lltest)
+coad.rgp <- getKM.permuted.LRT.v3(coad.filtfull, dim(coad.exp)[1], 1000, coad.outcome, coad.time)
+cdrgpval <- getPermutedPval(coad.stat$lltest, coad.rgp$lltest)
+brca.rgp <- getKM.permuted.LRT.v3(brca.filtfull, dim(brca.exp)[1], 1000, brca.outcome, brca.time)
+bargpval <- getPermutedPval(brca.stat$lltest, brca.rgp$lltest)
+lgg.rgp <- getKM.permuted.LRT.v3(lgg.filtfull, dim(lgg.exp)[1], 1000, lgg.outcome, lgg.time)
+lgrgpval <- getPermutedPval(lgg.stat$lltest, lgg.rgp$lltest)
+skcm.rgp <- getKM.permuted.LRT.v3(skcm.filtfull, dim(skcm.exp)[1], 1000, skcm.outcome, skcm.time)
+smrgpval <- getPermutedPval(skcm.stat$lltest, skcm.rgp$lltest)
+
+save(kcrgpval, kprgpval, cdrgpval, bargpval, lgrgpval, smrgpval, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/RandomGenepersResults_TCGA.RData")
+save(kirc.rgp, kirp.rgp, coad.rgp, brca.rgp, lgg.rgp, skcm.rgp, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/RandomGenepermResults_TCGA.RData")
 ```
 
 ## Plot Distributions of permuted statistics
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE, eval=FALSE}
 ## Plot distribution of permuted stats
 library(ggplot2)
 ## KIRC
@@ -207,14 +230,66 @@ skcm.distw <-ggplot(as.data.frame(skcm.perm), aes(x=skcm.perm$wtest)) +
   ggtitle("Permuted Wald  \n Statistic Distrubution \n Skin Cancer TCGA-SKCM")
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## Plot Distributions of  randome gene pull permuted statistics
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+## Plot distribution of permuted stats
+library(ggplot2)
+## KIRC
+kirc.rgdist <-ggplot(as.data.frame(kirc.rgp), aes(x=kirc.rgp$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  geom_vline(xintercept=kirc.stat$lltest, col = "red") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Randome Gene Permuted Log Likelihood  \n Statistic Distrubution \n Kidney Cancer TCGA-KIRC")
+## KIRP
+kirp.rgdist <-ggplot(as.data.frame(kirp.rgp), aes(x=kirp.rgp$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  geom_vline(xintercept=kirp.stat$lltest, col = "red") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Random Gene Permuted Log Likelihood  \n Statistic Distrubution \n Kidney Cancer TCGA-KIRP")
+## COAD
+coad.rgdist <-ggplot(as.data.frame(coad.rgp), aes(x=coad.rgp$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  geom_vline(xintercept=coad.stat$lltest, col = "red") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Random Gene Permuted Log Likelihood  \n Statistic Distrubution \n Colorectal Cancer TCGA-COAD")
+## BRCA
+brca.rgdist <-ggplot(as.data.frame(brca.rgp), aes(x=brca.rgp$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  geom_vline(xintercept=brca.stat$lltest, col = "red") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Randome Gene Permuted Log Likelihood  \n Statistic Distrubution \n Breast Cancer TCGA-BRCA")
+## LGG
+lgg.rgdist <-ggplot(as.data.frame(lgg.rgp), aes(x=lgg.rgp$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  geom_vline(xintercept=lgg.stat$lltest, col = "red") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Random Gene Permuted Log Likelihood  \n Statistic Distrubution \n Brain Cancer TCGA-LGG")
+## SKCM
+skcm.rgdist <-ggplot(as.data.frame(skcm.rgp), aes(x=skcm.rgp$lltest)) + 
+  geom_histogram(color="black", fill="white") +
+  geom_vline(xintercept=skcm.stat$lltest, col = "red") +
+  xlab("Log Likelihood Statistic") + ylab("Count") +
+  ggtitle("Randome Gene Permuted Log Likelihood  \n Statistic Distrubution \n Skin Cancer TCGA-SKCM")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
 source("multiplot.R")
 png(filename = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/TCGApermutationHistograms_Manuscript.png", height = 15, width = 18, res = 400, units = "in")
 multiplot(kirc.dist, kirc.distw, kirp.dist, kirp.distw, coad.dist, coad.distw, brca.dist, brca.distw, lgg.dist, lgg.distw, skcm.dist, skcm.distw, cols = 4)
 dev.off()
 ```
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+source("multiplot.R")
+png(filename = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/TCGARandomGenePermutationHistograms_Manuscript.png", height = 12, width = 12, res = 400, units = "in")
+multiplot(kirc.rgdist, kirp.rgdist, coad.rgdist, brca.rgdist, lgg.rgdist, skcm.rgdist, cols = 3)
+dev.off()
+```
+
 ![Figure 2. Permutation histograms](/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/TCGApermutationHistograms_Manuscript.png)
+
+![Figure 3. Random Gene Pull Permutation Histograms](/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/TCGARandomGenePermutationHistograms_Manuscript.png)
 
 ## Summary table of p-values from Cox PH modeling
 
@@ -232,7 +307,9 @@ kable(modelTable, caption = "Table 2. Model P-values")
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-#load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults_TCGA.RData")
+## Load data objects
+load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults_TCGA.RData")
+load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/RandomGenepersResults_TCGA.RData")
 
 #Generate table of perm results
 ctype <- c("Kidney", "Kidney", "Colorectal", "Breast", "Brain", "Skin")
@@ -249,6 +326,14 @@ pvalw <- c(kcppw, kpppw, cppw, bppw, lppw, sppw)
 perm.rsltsw <- data.frame("Cancer Type" = ctypew, "Dataset" = dsetw, "P-value" = pvalw)
 colnames(perm.rsltsw) <- c("Cancer Type", "Dataset", "P-value")
 kable(perm.rsltsw, caption = "Table 4. Permutation P-values - Wald")
+
+#Generate table of perm results - Randome Gene Pull 
+ctyperg <- c("Kidney", "Kidney", "Colorectal", "Breast", "Brain", "Skin")
+dsetrg <- c("TCGA-KIRC", "TCGA-KIRP", "TCGA-COAD", "TCGA-BRCA", "TCGA-LGG", "TCGA-SKCM")
+pvalrg <- c(kcrgpval, kprgpval, cdrgpval, bargpval, lgrgpval, smrgpval)
+perm.rsltsrg <- data.frame("Cancer Type" = ctyperg, "Dataset" = dsetrg, "P-value" = pvalrg)
+colnames(perm.rsltsrg) <- c("Cancer Type", "Dataset", "P-value")
+kable(perm.rsltsrg, caption = "Table 4. Randome Gene Pull Permutation P-values")
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}

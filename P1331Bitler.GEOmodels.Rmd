@@ -122,23 +122,35 @@ cnuh.wstat <- cnuh.sum$waldtest[1]
 ## Permutation test and p-value generation
 set.seed(2110)
 ## log likelihood
-cnuh.perm <- getKM.permuted.LRT.v2(cnuh, nPerm = 1000, cnuh.outcome, cnuh.time)
-cnuh.pp <- getPermutedPval(cnuh.stat, cnuh.perm$lltest)
-## wald
-cnuh.ppw <- getPermutedPval(cnuh.wstat, cnuh.perm$wtest)
+# cnuh.perm <- getKM.permuted.LRT.v2(cnuh, nPerm = 1000, cnuh.outcome, cnuh.time)
+# cnuh.pp <- getPermutedPval(cnuh.stat, cnuh.perm$lltest)
+# ## wald
+# cnuh.ppw <- getPermutedPval(cnuh.wstat, cnuh.perm$wtest)
 
 ## Plot distribution of permuted stats
 library(ggplot2)
-cnuh.dist <-ggplot(as.data.frame(cnuh.perm), aes(x=cnuh.perm$lltest)) + 
+# cnuh.dist <-ggplot(as.data.frame(cnuh.perm), aes(x=cnuh.perm$lltest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=cnuh.stat, col = "red") +
+#   xlab("Log Likelihood Statistic") + ylab("Count") +
+#   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Bladder Cancer CNUH Cohort (GSE13507)")
+# cnuh.distw <-ggplot(as.data.frame(cnuh.perm), aes(x=cnuh.perm$wtest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=cnuh.wstat, col = "red") +
+#   xlab("Wald Statistic") + ylab("Count") +
+#   ggtitle("Permuted Wald  \n Statistic Distrubution \n Bladder Cancer CNUH Cohort (GSE13507)")
+
+############################################
+#Random gene pull permutation
+############################################
+
+cnuh.rgp <- getKM.permuted.LRT.v3(GSE13507.expr, dim(cnuh)[1], 1000, cnuh.outcome, cnuh.time)
+cnuh.rgpval <- getPermutedPval(cnuh.stat, cnuh.rgp$lltest)
+cnuh.rgdist <- ggplot(as.data.frame(cnuh.rgp), aes(x=cnuh.rgp$lltest)) + 
   geom_histogram(color="black", fill="white") +
   geom_vline(xintercept=cnuh.stat, col = "red") +
   xlab("Log Likelihood Statistic") + ylab("Count") +
-  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Bladder Cancer CNUH Cohort (GSE13507)")
-cnuh.distw <-ggplot(as.data.frame(cnuh.perm), aes(x=cnuh.perm$wtest)) + 
-  geom_histogram(color="black", fill="white") +
-  geom_vline(xintercept=cnuh.wstat, col = "red") +
-  xlab("Wald Statistic") + ylab("Count") +
-  ggtitle("Permuted Wald  \n Statistic Distrubution \n Bladder Cancer CNUH Cohort (GSE13507)")
+  ggtitle("Random Gene Permuted Log Likelihood  \n Statistic Distrubution \n Bladder Cancer CNUH Cohort (GSE13507)")
 ```
 
 **B. Bladder Cancer - Lindgren** 
@@ -183,23 +195,35 @@ lindgren.wstat <- lindgren.sum$waldtest[1]
 
 set.seed(2110)
 ## log likelihood
-lindgren.perm <- getKM.permuted.LRT.v2(lindgren, nPerm = 1000, Lindgren.outcome, Lindgren.time)
-lindgren.pp <- getPermutedPval(lindgren.stat, lindgren.perm$lltest)
-## wald
-lindgren.ppw <- getPermutedPval(lindgren.wstat, lindgren.perm$wtest)
+# lindgren.perm <- getKM.permuted.LRT.v2(lindgren, nPerm = 1000, Lindgren.outcome, Lindgren.time)
+# lindgren.pp <- getPermutedPval(lindgren.stat, lindgren.perm$lltest)
+# ## wald
+# lindgren.ppw <- getPermutedPval(lindgren.wstat, lindgren.perm$wtest)
+# 
+# ## Plot distribution of permuted stats
+# library(ggplot2)
+# lindgren.dist <-ggplot(as.data.frame(lindgren.perm), aes(x=lindgren.perm$lltest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=lindgren.stat, col = "red") +
+#   xlab("Log Likelihood Statistic") + ylab("Count") +
+#   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Bladder Cancer Lindgren Cohort (GSE19915)")
+# lindgren.distw <-ggplot(as.data.frame(lindgren.perm), aes(x=lindgren.perm$wtest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=lindgren.wstat, col = "red") +
+#   xlab("Wald Statistic") + ylab("Count") +
+#   ggtitle("Permuted Wald  \n Statistic Distrubution \n Bladder Cancer Lindgren Cohort (GSE19915)")
 
-## Plot distribution of permuted stats
-library(ggplot2)
-lindgren.dist <-ggplot(as.data.frame(lindgren.perm), aes(x=lindgren.perm$lltest)) + 
+############################################
+#Random gene pull permutation
+############################################
+
+lindgren.rgp <- getKM.permuted.LRT.v3(Lindgren.expr, dim(lindgren)[1], 1000, Lindgren.outcome, Lindgren.time)
+lindgren.rgpval <- getPermutedPval(lindgren.stat, lindgren.rgp$lltest)
+lindgren.rgdist <- ggplot(as.data.frame(lindgren.rgp), aes(x=lindgren.rgp$lltest)) + 
   geom_histogram(color="black", fill="white") +
   geom_vline(xintercept=lindgren.stat, col = "red") +
   xlab("Log Likelihood Statistic") + ylab("Count") +
-  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Bladder Cancer Lindgren Cohort (GSE19915)")
-lindgren.distw <-ggplot(as.data.frame(lindgren.perm), aes(x=lindgren.perm$wtest)) + 
-  geom_histogram(color="black", fill="white") +
-  geom_vline(xintercept=lindgren.wstat, col = "red") +
-  xlab("Wald Statistic") + ylab("Count") +
-  ggtitle("Permuted Wald  \n Statistic Distrubution \n Bladder Cancer Lindgren Cohort (GSE19915)")
+  ggtitle("Rnadom Gene Permuted Log Likelihood  \n Statistic Distrubution \n Bladder Cancer Lindgren Cohort (GSE19915)")
 ```
 
 **C. Colorectal Cancer - CIT** 
@@ -252,24 +276,36 @@ cit.wstat <- cit.sum$waldtest[1]
 # legend("bottomleft", legend=c("High", "Low", "p-value = 5.81e-06"), fill = c("red", "blue", "white"))
 
 set.seed(2110)
-cit.perm <- getKM.permuted.LRT.v2(cit.2, nPerm = 1000, cit.pheno.2$RFS.event, cit.pheno.2$RFS.delay)
-## log likelihood
-cit.pp <- getPermutedPval(cit.stat, cit.perm$lltest)
-## wald
-cit.ppw <- getPermutedPval(cit.wstat, cit.perm$wtest)
+# cit.perm <- getKM.permuted.LRT.v2(cit.2, nPerm = 1000, cit.pheno.2$RFS.event, cit.pheno.2$RFS.delay)
+# ## log likelihood
+# cit.pp <- getPermutedPval(cit.stat, cit.perm$lltest)
+# ## wald
+# cit.ppw <- getPermutedPval(cit.wstat, cit.perm$wtest)
+# 
+# ## Plot distribution of permuted stats
+# library(ggplot2)
+# cit.dist <-ggplot(as.data.frame(cit.perm), aes(x=cit.perm$lltest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=cit.stat, col = "red") +
+#   xlab("Log Likelihood Statistic") + ylab("Count") +
+#   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Colorectal Cancer CIT (GSE39582)")
+# cit.distw <-ggplot(as.data.frame(cit.perm), aes(x=cit.perm$wtest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=cit.wstat, col = "red") +
+#   xlab("Wald Statistic") + ylab("Count") +
+#   ggtitle("Permuted Wald  \n Statistic Distrubution \n Colorectal Cancer CIT (GSE39582)")
 
-## Plot distribution of permuted stats
-library(ggplot2)
-cit.dist <-ggplot(as.data.frame(cit.perm), aes(x=cit.perm$lltest)) + 
+############################################
+#Random gene pull permutation
+############################################
+
+cit.rgp <- getKM.permuted.LRT.v3(cit, dim(cit.2)[1], 1000, cit.pheno.2$RFS.event, cit.pheno.2$RFS.delay)
+cit.rgpval <- getPermutedPval(cit.stat, cit.rgp$lltest)
+cit.rgdist <- ggplot(as.data.frame(cit.rgp), aes(x=cit.rgp$lltest)) + 
   geom_histogram(color="black", fill="white") +
   geom_vline(xintercept=cit.stat, col = "red") +
   xlab("Log Likelihood Statistic") + ylab("Count") +
-  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Colorectal Cancer CIT (GSE39582)")
-cit.distw <-ggplot(as.data.frame(cit.perm), aes(x=cit.perm$wtest)) + 
-  geom_histogram(color="black", fill="white") +
-  geom_vline(xintercept=cit.wstat, col = "red") +
-  xlab("Wald Statistic") + ylab("Count") +
-  ggtitle("Permuted Wald  \n Statistic Distrubution \n Colorectal Cancer CIT (GSE39582)")
+  ggtitle("Random Gene Permuted Log Likelihood  \n Statistic Distrubution \n Colorectal Cancer CIT (GSE39582)")
 ```
 
 **D. Prostate Cancer - Sboner** 
@@ -330,24 +366,36 @@ Sboner.wstat <- Sboner.sum$waldtest[1]
 # legend("bottomleft", legend=c("High", "Low", "p-value = 1.29e-09"), fill = c("red", "blue", "white"))
 
 set.seed(2110)
-Sboner.perm <- getKM.permuted.LRT.v2(Sboner.2, nPerm = 1000, pd.Sboner$event, pd.Sboner$time)
-## log likelihood
-Sboner.pp <- getPermutedPval(Sboner.stat, Sboner.perm$lltest)
-## wald
-Sboner.ppw <- getPermutedPval(Sboner.wstat, Sboner.perm$wtest)
+# Sboner.perm <- getKM.permuted.LRT.v2(Sboner.2, nPerm = 1000, pd.Sboner$event, pd.Sboner$time)
+# ## log likelihood
+# Sboner.pp <- getPermutedPval(Sboner.stat, Sboner.perm$lltest)
+# ## wald
+# Sboner.ppw <- getPermutedPval(Sboner.wstat, Sboner.perm$wtest)
+# 
+# ## Plot distribution of permuted stats
+# library(ggplot2)
+# Sboner.dist <-ggplot(as.data.frame(Sboner.perm), aes(x=Sboner.perm$lltest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=Sboner.stat, col = "red") +
+#   xlab("Log Likelihood Statistic") + ylab("Count") +
+#   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Prostate Cancer Sboner (GSE16560)")
+# Sboner.distw <-ggplot(as.data.frame(Sboner.perm), aes(x=Sboner.perm$wtest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=Sboner.wstat, col = "red") +
+#   xlab("Wald Statistic") + ylab("Count") +
+#   ggtitle("Permuted Wald  \n Statistic Distrubution \n Prostate Cancer Sboner (GSE16560)")
 
-## Plot distribution of permuted stats
-library(ggplot2)
-Sboner.dist <-ggplot(as.data.frame(Sboner.perm), aes(x=Sboner.perm$lltest)) + 
+############################################
+#Random gene pull permutation
+############################################
+
+Sboner.rgp <- getKM.permuted.LRT.v3(expr.Sboner, dim(Sboner.2)[1], 1000, pd.Sboner$event, pd.Sboner$time)
+Sboner.rgpval <- getPermutedPval(Sboner.stat, Sboner.rgp$lltest)
+Sboner.rgdist <- ggplot(as.data.frame(Sboner.rgp), aes(x=Sboner.rgp$lltest)) + 
   geom_histogram(color="black", fill="white") +
   geom_vline(xintercept=Sboner.stat, col = "red") +
   xlab("Log Likelihood Statistic") + ylab("Count") +
-  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Prostate Cancer Sboner (GSE16560)")
-Sboner.distw <-ggplot(as.data.frame(Sboner.perm), aes(x=Sboner.perm$wtest)) + 
-  geom_histogram(color="black", fill="white") +
-  geom_vline(xintercept=Sboner.wstat, col = "red") +
-  xlab("Wald Statistic") + ylab("Count") +
-  ggtitle("Permuted Wald  \n Statistic Distrubution \n Prostate Cancer Sboner (GSE16560)")
+  ggtitle("Random Gene Permuted Log Likelihood  \n Statistic Distrubution \n Prostate Cancer Sboner (GSE16560)")
 ```
 
 **E. Breast Cancer - Bos** 
@@ -397,24 +445,36 @@ Bos.wstat <- Bos.sum$waldtest[1]
 # legend("topright", legend=c("High", "Low", "p-value = 3.44e-07"), fill= c("red", "blue", "white"))
 
 set.seed(2110)
-Bos.perm <- getKM.permuted.LRT.v2(Bos2, nPerm = 1000, Bos.pd[,"event"], Bos.pd[,"survivaTime.months"])
-## log likelihood
-Bos.pp <- getPermutedPval(Bos.stat, Bos.perm$lltest)
-## wald
-Bos.ppw <- getPermutedPval(Bos.wstat, Bos.perm$wtest)
+# Bos.perm <- getKM.permuted.LRT.v2(Bos2, nPerm = 1000, Bos.pd[,"event"], Bos.pd[,"survivaTime.months"])
+# ## log likelihood
+# Bos.pp <- getPermutedPval(Bos.stat, Bos.perm$lltest)
+# ## wald
+# Bos.ppw <- getPermutedPval(Bos.wstat, Bos.perm$wtest)
+# 
+# ## Plot distribution of permuted stats
+# library(ggplot2)
+# Bos.dist <-ggplot(as.data.frame(Bos.perm), aes(x=Bos.perm$lltest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=Bos.stat, col = "red") +
+#   xlab("Log Likelihood Statistic") + ylab("Count") +
+#   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Breast Cancer Bos (GSE12276)")
+# Bos.distw <-ggplot(as.data.frame(Bos.perm), aes(x=Bos.perm$wtest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=Bos.wstat, col = "red") +
+#   xlab("Wald Statistic") + ylab("Count") +
+#   ggtitle("Permuted Wald  \n Statistic Distrubution \n Breast Cancer Bos (GSE12276)")
 
-## Plot distribution of permuted stats
-library(ggplot2)
-Bos.dist <-ggplot(as.data.frame(Bos.perm), aes(x=Bos.perm$lltest)) + 
+############################################
+#Random gene pull permutation
+############################################
+
+Bos.rgp <- getKM.permuted.LRT.v3(Bos, dim(Bos2)[1], 1000, Bos.pd[,"event"], Bos.pd[,"survivaTime.months"])
+Bos.rgpval <- getPermutedPval(Bos.stat, Bos.rgp$lltest)
+Bos.rgdist <- ggplot(as.data.frame(Bos.rgp), aes(x=Bos.rgp$lltest)) + 
   geom_histogram(color="black", fill="white") +
   geom_vline(xintercept=Bos.stat, col = "red") +
   xlab("Log Likelihood Statistic") + ylab("Count") +
-  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Breast Cancer Bos (GSE12276)")
-Bos.distw <-ggplot(as.data.frame(Bos.perm), aes(x=Bos.perm$wtest)) + 
-  geom_histogram(color="black", fill="white") +
-  geom_vline(xintercept=Bos.wstat, col = "red") +
-  xlab("Wald Statistic") + ylab("Count") +
-  ggtitle("Permuted Wald  \n Statistic Distrubution \n Breast Cancer Bos (GSE12276)")
+  ggtitle("Random Gene Permuted Log Likelihood  \n Statistic Distrubution \n Breast Cancer Bos (GSE12276)")
 ```
 
 **F. Lung Cancer - Duke** 
@@ -463,24 +523,36 @@ Duke.wstat <- Duke.sum$waldtest[1]
 # legend("bottomleft", legend=c("High", "Low", "p-value = 3.61e-10"), fill= c("red", "blue", "white"))
 
 set.seed(2110)
-Duke.perm <- getKM.permuted.LRT.v2(Duke2, nPerm = 1000, as.numeric(forAnalysis[,"event"]), as.numeric(forAnalysis[,"time"]))
-## log likelihood
-Duke.pp <- getPermutedPval(Duke.stat, Duke.perm$lltest)
-## wald
-Duke.ppw <- getPermutedPval(Duke.wstat, Duke.perm$wtest)
+# Duke.perm <- getKM.permuted.LRT.v2(Duke2, nPerm = 1000, as.numeric(forAnalysis[,"event"]), as.numeric(forAnalysis[,"time"]))
+# ## log likelihood
+# Duke.pp <- getPermutedPval(Duke.stat, Duke.perm$lltest)
+# ## wald
+# Duke.ppw <- getPermutedPval(Duke.wstat, Duke.perm$wtest)
+# 
+# ## Plot distribution of permuted stats
+# library(ggplot2)
+# Duke.dist <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$lltest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=Duke.stat, col = "red") +
+#   xlab("Log Likelihood Statistic") + ylab("Count") +
+#   ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
+# Duke.distw <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$wtest)) + 
+#   geom_histogram(color="black", fill="white") +
+#   geom_vline(xintercept=Duke.wstat, col = "red") +
+#   xlab("Wald Statistic") + ylab("Count") +
+#   ggtitle("Permuted Wald  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
 
-## Plot distribution of permuted stats
-library(ggplot2)
-Duke.dist <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$lltest)) + 
+############################################
+#Random gene pull permutation
+############################################
+
+Duke.rgp <- getKM.permuted.LRT.v3(Duke, dim(Duke2)[1], 1000, as.numeric(forAnalysis[,"event"]), as.numeric(forAnalysis[,"time"]))
+Duke.rgpval <- getPermutedPval(Duke.stat, Duke.rgp$lltest)
+Duke.rgdist <- ggplot(as.data.frame(Duke.rgp), aes(x=Duke.rgp$lltest)) + 
   geom_histogram(color="black", fill="white") +
   geom_vline(xintercept=Duke.stat, col = "red") +
   xlab("Log Likelihood Statistic") + ylab("Count") +
-  ggtitle("Permuted Log Likelihood  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
-Duke.distw <-ggplot(as.data.frame(Duke.perm), aes(x=Duke.perm$wtest)) + 
-  geom_histogram(color="black", fill="white") +
-  geom_vline(xintercept=Duke.wstat, col = "red") +
-  xlab("Wald Statistic") + ylab("Count") +
-  ggtitle("Permuted Wald  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
+  ggtitle("Randome Gene Permuted Log Likelihood  \n Statistic Distrubution \n Lung Cancer Duke (GSE3141)")
 ```
 
 ## KM Plots for manuscript
@@ -518,13 +590,23 @@ dev.off()
 
 ## Plot Distributions of permuted statistics
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
 png(filename = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/permutationHistograms_Manuscript.png", height = 15, width = 18, res = 400, units = "in")
 multiplot(cnuh.dist, cnuh.distw, lindgren.dist, lindgren.distw, cit.dist, cit.distw, Sboner.dist, Sboner.distw, Bos.dist, Bos.distw, Duke.dist, Duke.distw, cols = 4)
 dev.off()
 ```
 
 ![Figure 2. Permutation histograms](/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/permutationHistograms_Manuscript.png)
+
+## Plot Distributions of random gene permuted statistics
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+png(filename = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/randomGenePermHistograms_Manuscript.png", height = 12, width = 12, res = 400, units = "in")
+multiplot(cnuh.rgdist, lindgren.rgdist, cit.rgdist, Sboner.rgdist, Bos.rgdist, Duke.rgdist, cols = 3)
+dev.off()
+```
+
+![Figure 3. Random Gene Permutation Histograms](/Users/harry/Documents/CIDA/Projects/P1331Bitler/graphics/randomGenePermHistograms_Manuscript.png)
 
 ## Summary table of p-values from Cox PH modeling
 
@@ -544,9 +626,12 @@ kable(modelTable, caption = "Table 2. Model P-values")
 ## Summary table of p-values from permutation tests
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-save(cnuh.pp, lindgren.pp, cit.pp, Sboner.pp, Bos.pp, Duke.pp, cnuh.ppw, lindgren.ppw, cit.ppw, Sboner.ppw, Bos.ppw, Duke.ppw, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults.RData")
-save(cnuh.perm, lindgren.perm, cit.perm, Sboner.perm, Bos.perm, Duke.perm, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/permGEOpersResults.RData")
-#load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults.RData")
+#save(cnuh.pp, lindgren.pp, cit.pp, Sboner.pp, Bos.pp, Duke.pp, cnuh.ppw, lindgren.ppw, cit.ppw, Sboner.ppw, Bos.ppw, Duke.ppw, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults.RData")
+#save(cnuh.perm, lindgren.perm, cit.perm, Sboner.perm, Bos.perm, Duke.perm, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/permGEOpersResults.RData")
+save(cnuh.rgp, lindgren.rgp, cit.rgp, Sboner.rgp, Bos.rgp, Duke.rgp, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/permRandomGeneGEOpersResults.RData")
+save(cnuh.rgpval, lindgren.rgpval, cit.rgpval, Sboner.rgpval, Bos.rgpval, Duke.rgpval, file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/RandomGeneGEOpersResults.RData")
+load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/persResults.RData")
+load(file = "/Users/harry/Documents/CIDA/Projects/P1331Bitler/dataProcessed/RandomGeneGEOpersResults.RData")
 #Generate table of perm results
 ctype <- c("Bladder", "Bladder", "Colorectal", "Prostate", "Breast", "Lung")
 dset <- c("GSE13507C", "GSE19915", "GSE39582", "GSE16560", "GSE12276", "GSE3141")
@@ -562,6 +647,15 @@ pvalw <- c(cnuh.ppw, lindgren.ppw, cit.ppw, Sboner.ppw, Bos.ppw, Duke.ppw)
 perm.rsltsw <- data.frame("Cancer Type" = ctypew, "Dataset" = dsetw, "P-value" = pvalw)
 colnames(perm.rsltsw) <- c("Cancer Type", "Dataset", "P-value")
 kable(perm.rsltsw, caption = "Table 4. Permutation P-values - Wald")
+
+#Generate table of perm results - rg perm
+ctyperg <- c("Bladder", "Bladder", "Colorectal", "Prostate", "Breast", "Lung")
+dsetrg <- c("GSE13507C", "GSE19915", "GSE39582", "GSE16560", "GSE12276", "GSE3141")
+pvalrg <- c(cnuh.rgpval, lindgren.rgpval, cit.rgpval, Sboner.rgpval, Bos.rgpval, Duke.rgpval)
+pvalrg <- ifelse(pvalrg < 0.0001, "< 0.0001", round(pvalrg, 4))
+perm.rsltsrg <- data.frame("Cancer Type" = ctyperg, "Dataset" = dsetrg, "P-value" = pvalrg)
+colnames(perm.rsltsrg) <- c("Cancer Type", "Dataset", "P-value")
+kable(perm.rsltsrg, caption = "Table 4. Permutation P-values - Random Gene Pull")
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}

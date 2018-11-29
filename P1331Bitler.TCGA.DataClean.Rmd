@@ -1,0 +1,288 @@
+---
+title: "P1331Bitler.TCGA.DataClean"
+author: "Harry Smith"
+date: "5/7/2018"
+output: html_document
+---
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Set up workspace
+rm(list = ls())
+options(stringsAsFactors = FALSE)
+setwd("/Users/harry/Documents/CIDA/Projects/P1331Bitler/code")
+'%!in%' <- function(x,y)!('%in%'(x,y))
+dirs <- "/Users/harry/Documents/CIDA/Projects/P1331Bitler/"
+Top_Genes <- read.csv(file = paste(dirs, "dataRaw/", "Top_Genes.csv", sep = ""), header = TRUE)
+bensGenes <- Top_Genes$Gene
+
+## Load human reference annotation and subset based on Bens gene list. There are 108 genes in bens list
+hg38 <- read.csv(paste(dirs, "dataRaw/","biomart.hg38.p12-4-24-18.txt", sep = ""), header = TRUE)
+hg38.ensID <- hg38$Gene.stable.ID[which(hg38$Gene.name %in% bensGenes)] # 2 genes in bens list are not present in annotation. The total is 106 genes
+```
+
+TCGA-KIRC
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## Read Data
+kirc <- read.table(paste(dirs, "dataRaw/TCGAdata/", "TCGA-KIRC/Merged_RNASeq_20180507-125811/Merged_Counts.tsv", sep = ""), header = TRUE, sep = "\t")
+## Get ensemble names to match those in annotation set by removing the.# at the end
+sample.names <- unlist(lapply(strsplit(colnames(kirc), split = ".", fixed = TRUE), FUN = function(x) x[3]))
+sum(!duplicated(sample.names)) # Check to see if there are repeats. If there are, this number will be less than the total number of columns in original dataset
+## Make ensembl version names into just ensemble names and assign row names to these
+kirc$X <- unlist(lapply(strsplit(kirc$X, split = ".", fixed = TRUE), FUN = function(x) x[1]))
+rownames(kirc) <- kirc$X
+kirc <- kirc[, -1]
+## change column names to be sample names
+colnames(kirc) <- sample.names[-1]
+## Merge columns for samples that have repeats
+patterns <- unique(substr(names(kirc), 1, 4))  # store patterns in a vector
+kirc <- sapply(patterns, function(xx) rowSums(kirc[,grep(xx, names(kirc)), drop=FALSE]))
+dim(kirc) # Should match the number of cases from TCGA database: 530
+
+## Filter count data
+kirc.filt <- kirc[rowSums(kirc)>(10*ncol(kirc)), ]
+kirc.filt <- as.data.frame(kirc.filt)
+kirc.filt$gene_id <- rownames(kirc.filt)
+
+## Generate expression dataset
+kirc.expr <- kirc.filt[which(kirc.filt$gene_id %in% hg38.ensID), ]
+
+#read in and format clinical data
+clin.kirc <- read.table(paste(dirs, "dataRaw/TCGAdata/TCGA-KIRC/clinical.tsv", sep = ""), header = TRUE, sep = "\t")
+kirc.pid <- unlist(lapply(strsplit(clin.kirc$submitter_id, split = "-", fixed = TRUE), FUN = function(x) x[3]))
+sum(kirc.pid %in% colnames(kirc.filt)) # Should equal the same number as samples in expression set: 530
+clin.kirc$vital_status <- ifelse(clin.kirc$vital_status == "alive",NA, 1)
+clin.kirc$days_to_death <- ifelse(clin.kirc$days_to_death == "--", NA, clin.kirc$days_to_death)
+
+## Get the probesets to perform Cox proportional-hazard regression on
+kirc.exp = kirc.expr[, -c(which(is.na(clin.kirc$days_to_death)), length(colnames(kirc.expr)))]
+kirc.outcome = as.numeric(clin.kirc$vital_status[!is.na(clin.kirc$vital_status)])
+kirc.time = as.numeric(clin.kirc$days_to_death[!is.na(clin.kirc$days_to_death)])
+kirc.filtfull <- kirc.filt[, -c(which(is.na(clin.kirc$days_to_death)), length(colnames(kirc.expr)))]
+save(kirc.filtfull, kirc.exp, kirc.outcome, kirc.time, file = paste(dirs, "dataProcessed/TCGA-KIRC/kirc.RData", sep = ""))
+```
+
+TCGA-KIRP
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## Read Data
+kirp <- read.table(paste(dirs, "dataRaw/TCGAdata/", "TCGA-KIRP/Merged_RNASeq_20180507-141919/Merged_Counts.tsv", sep = ""), header = TRUE, sep = "\t")
+## Get ensemble names to match those in annotation set by removing the.# at the end
+sample.names <- unlist(lapply(strsplit(colnames(kirp), split = ".", fixed = TRUE), FUN = function(x) x[3]))
+sum(!duplicated(sample.names)) # Check to see if there are repeats. If there are, this number will be less than the total number of columns in original dataset
+## Make ensembl version names into just ensemble names and assign row names to these
+kirp$X <- unlist(lapply(strsplit(kirp$X, split = ".", fixed = TRUE), FUN = function(x) x[1]))
+rownames(kirp) <- kirp$X
+kirp <- kirp[, -1]
+## change column names to be sample names
+colnames(kirp) <- sample.names[-1]
+## Merge columns for samples that have repeats
+patterns <- unique(substr(names(kirp), 1, 4))  # store patterns in a vector
+kirp <- sapply(patterns, function(xx) rowSums(kirp[,grep(xx, names(kirp)), drop=FALSE]))
+dim(kirp) # Should match the number of cases from TCGA database: 290
+
+## Filter count data
+kirp.filt <- kirp[rowSums(kirp)>(10*ncol(kirp)), ]
+kirp.filt <- as.data.frame(kirp.filt)
+kirp.filt$gene_id <- rownames(kirp.filt)
+
+## Generate expression dataset
+kirp.expr <- kirp.filt[which(kirp.filt$gene_id %in% hg38.ensID), ]
+
+#read in and format clinical data
+clin.kirp <- read.table(paste(dirs, "dataRaw/TCGAdata/TCGA-KIRP/clinical.tsv", sep = ""), header = TRUE, sep = "\t")
+kirp.pid <- unlist(lapply(strsplit(clin.kirp$submitter_id, split = "-", fixed = TRUE), FUN = function(x) x[3]))
+sum(kirp.pid %in% colnames(kirp.filt)) # Should equal the same number as samples in expression set: 530
+clin.kirp$vital_status <- ifelse(clin.kirp$vital_status == "alive",NA, 1)
+clin.kirp$days_to_death <- ifelse(clin.kirp$days_to_death == "--", NA, clin.kirp$days_to_death)
+
+## Get the probesets to perform Cox proportional-hazard regression on
+kirp.exp = kirp.expr[, -c(which(is.na(clin.kirp$days_to_death)), length(colnames(kirp.expr)))]
+kirp.outcome = as.numeric(clin.kirp$vital_status[!is.na(clin.kirp$vital_status)])
+kirp.time = as.numeric(clin.kirp$days_to_death[!is.na(clin.kirp$days_to_death)])
+kirp.filtfull <- kirp.filt[, -c(which(is.na(clin.kirp$days_to_death)), length(colnames(kirp.expr)))]
+save(kirp.filtfull, kirp.exp, kirp.outcome, kirp.time, file = paste(dirs, "dataProcessed/TCGA-KIRP/kirp.RData", sep = ""))
+```
+
+TCGA-COAD
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## Read Data
+coad <- read.table(paste(dirs, "dataRaw/TCGAdata/", "TCGA-COAD/Merged_RNASeq_20180507-150801/Merged_Counts.tsv", sep = ""), header = TRUE, sep = "\t")
+## Get ensemble names to match those in annotation set by removing the.# at the end
+sample.names <- unlist(lapply(strsplit(colnames(coad), split = ".", fixed = TRUE), FUN = function(x) x[3]))
+sum(!duplicated(sample.names)) # Check to see if there are repeats. If there are, this number will be less than the total number of columns in original dataset
+## Make ensembl version names into just ensemble names and assign row names to these
+coad$X <- unlist(lapply(strsplit(coad$X, split = ".", fixed = TRUE), FUN = function(x) x[1]))
+rownames(coad) <- coad$X
+coad <- coad[, -1]
+## change column names to be sample names
+colnames(coad) <- sample.names[-1]
+## Merge columns for samples that have repeats
+patterns <- unique(substr(names(coad), 1, 4))  # store patterns in a vector
+coad <- sapply(patterns, function(xx) rowSums(coad[,grep(xx, names(coad)), drop=FALSE]))
+dim(coad) # Should match the number of cases from TCGA database: 456
+
+## Filter count data
+coad.filt <- coad[rowSums(coad)>(10*ncol(coad)), ]
+coad.filt <- as.data.frame(coad.filt)
+coad.filt$gene_id <- rownames(coad.filt)
+
+## Generate expression dataset
+coad.expr <- coad.filt[which(coad.filt$gene_id %in% hg38.ensID), -c(which(colnames(coad.filt) %in% c("AAT5", "AATA")))] #Removed these subjects due to missingness in clinical dataset
+
+coad.filtfull <- coad.filt[, -c(which(colnames(coad.filt) %in% c("AAT5", "AATA")))]
+
+#read in and format clinical data
+clin.coad <- read.table(paste(dirs, "dataRaw/TCGAdata/TCGA-COAD/clinical.tsv", sep = ""), header = TRUE, sep = "\t")
+clin.coad <- clin.coad[-c(455, 456), ] ## Removed these subjects because they have all missing data
+coad.pid <- unlist(lapply(strsplit(clin.coad$submitter_id, split = "-", fixed = TRUE), FUN = function(x) x[3]))
+sum(coad.pid %in% colnames(coad.filt)) # Should equal the same number as samples in expression set: 530
+clin.coad$vital_status <- ifelse(clin.coad$vital_status == "alive",NA, 1)
+clin.coad$days_to_death <- ifelse(clin.coad$days_to_death == "--", NA, clin.coad$days_to_death)
+
+## Get the probesets to perform Cox proportional-hazard regression on
+coad.exp = coad.expr[, -c(which(is.na(clin.coad$days_to_death)), length(colnames(coad.expr)))]
+coad.outcome = as.numeric(clin.coad$vital_status[!is.na(clin.coad$vital_status)])
+coad.time = as.numeric(clin.coad$days_to_death[!is.na(clin.coad$days_to_death)])
+coad.filtfull = coad.filtfull[, -c(which(is.na(clin.coad$days_to_death)), length(colnames(coad.expr)))]
+save(coad.filtfull, coad.exp, coad.outcome, coad.time, file = paste(dirs, "dataProcessed/TCGA-COAD/coad.RData", sep = ""))
+```
+
+TCGA-BRCA
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## Read Data
+brca <- read.table(paste(dirs, "dataRaw/TCGAdata/", "TCGA-BRCA/Merged_RNASeq_20180507-154844/Merged_Counts.tsv", sep = ""), header = TRUE, sep = "\t")
+## Get ensemble names to match those in annotation set by removing the.# at the end
+sample.names <- unlist(lapply(strsplit(colnames(brca), split = ".", fixed = TRUE), FUN = function(x) x[3]))
+sum(!duplicated(sample.names)) # Check to see if there are repeats. If there are, this number will be less than the total number of columns in original dataset
+## Make ensembl version names into just ensemble names and assign row names to these
+brca$X <- unlist(lapply(strsplit(brca$X, split = ".", fixed = TRUE), FUN = function(x) x[1]))
+rownames(brca) <- brca$X
+brca <- brca[, -1]
+## change column names to be sample names
+colnames(brca) <- sample.names[-1]
+## Merge columns for samples that have repeats
+patterns <- unique(substr(names(brca), 1, 4))  # store patterns in a vector
+brca <- sapply(patterns, function(xx) rowSums(brca[,grep(xx, names(brca)), drop=FALSE]))
+dim(brca) # Should match the number of cases from TCGA database: 456
+
+## Filter count data
+brca.filt <- brca[rowSums(brca)>(10*ncol(brca)), ]
+brca.filt <- as.data.frame(brca.filt)
+brca.filt$gene_id <- rownames(brca.filt)
+
+## Generate expression dataset
+brca.expr <- brca.filt[which(brca.filt$gene_id %in% hg38.ensID), -c(which(colnames(brca.filt) %in% c("A245", "A0B2")))] #Removed these subjects due to missingness in clinical dataset
+
+brca.filtfull <- brca.filt[, -c(which(colnames(brca.filt) %in% c("A245", "A0B2")))]
+
+#read in and format clinical data
+clin.brca <- read.table(paste(dirs, "dataRaw/TCGAdata/TCGA-BRCA/clinical.tsv", sep = ""), header = TRUE, sep = "\t")
+brca.pid <- unlist(lapply(strsplit(clin.brca$submitter_id, split = "-", fixed = TRUE), FUN = function(x) x[3]))
+clin.brca$pid <- brca.pid
+clin.brca <- clin.brca[-which(clin.brca$pid %in% c("A245", "A0B2")), ] ## Removed these subjects because they have all missing data
+sum(brca.pid %in% colnames(brca.filt)) # Should equal the same number as samples in expression set: 530
+clin.brca$vital_status <- ifelse(clin.brca$vital_status == "alive",NA, 1)
+clin.brca$days_to_death <- ifelse(clin.brca$days_to_death == "--", NA, clin.brca$days_to_death)
+
+## Get the probesets to perform Cox proportional-hazard regression on
+brca.exp = brca.expr[, -c(which(is.na(clin.brca$days_to_death)), length(colnames(brca.expr)))]
+brca.outcome = as.numeric(clin.brca$vital_status[!is.na(clin.brca$vital_status)])
+brca.time = as.numeric(clin.brca$days_to_death[!is.na(clin.brca$days_to_death)])
+brca.filtfull = brca.filtfull[, -c(which(is.na(clin.brca$days_to_death)), length(colnames(brca.expr)))]
+save(brca.filtfull, brca.exp, brca.outcome, brca.time, file = paste(dirs, "dataProcessed/TCGA-BRCA/brca.RData", sep = ""))
+```
+
+TCGA-LGG
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## Read Data
+lgg <- read.table(paste(dirs, "dataRaw/TCGAdata/", "TCGA-LGG/Merged_RNASeq_20180507-164056/Merged_Counts.tsv", sep = ""), header = TRUE, sep = "\t")
+## Get ensemble names to match those in annotation set by removing the.# at the end
+sample.names <- unlist(lapply(strsplit(colnames(lgg), split = ".", fixed = TRUE), FUN = function(x) x[3]))
+sum(!duplicated(sample.names)) # Check to see if there are repeats. If there are, this number will be less than the total number of columns in original dataset
+## Make ensembl version names into just ensemble names and assign row names to these
+lgg$X <- unlist(lapply(strsplit(lgg$X, split = ".", fixed = TRUE), FUN = function(x) x[1]))
+rownames(lgg) <- lgg$X
+lgg <- lgg[, -1]
+## change column names to be sample names
+colnames(lgg) <- sample.names[-1]
+## Merge columns for samples that have repeats
+patterns <- unique(substr(names(lgg), 1, 4))  # store patterns in a vector
+lgg <- sapply(patterns, function(xx) rowSums(lgg[,grep(xx, names(lgg)), drop=FALSE]))
+dim(lgg) # Should match the number of cases from TCGA database: 456
+
+## Filter count data
+lgg.filt <- lgg[rowSums(lgg)>(10*ncol(lgg)), ]
+lgg.filt <- as.data.frame(lgg.filt)
+lgg.filt$gene_id <- rownames(lgg.filt)
+
+## Generate expression dataset
+lgg.expr <- lgg.filt[which(lgg.filt$gene_id %in% hg38.ensID), -c(which(colnames(lgg.filt) %in% c("A6YH", "5390")))] #Removed these subjects due to missingness in clinical dataset
+
+## Full data set
+lgg.filtfull <- lgg.filt[, -c(which(colnames(lgg.filt) %in% c("A6YH", "5390")))] 
+
+#read in and format clinical data
+clin.lgg <- read.table(paste(dirs, "dataRaw/TCGAdata/TCGA-LGG/clinical.tsv", sep = ""), header = TRUE, sep = "\t")
+lgg.pid <- unlist(lapply(strsplit(clin.lgg$submitter_id, split = "-", fixed = TRUE), FUN = function(x) x[3]))
+clin.lgg$pid <- lgg.pid
+clin.lgg <- clin.lgg[-which(clin.lgg$pid %in% c("A6YH", "5390")), ] ## Removed these subjects because they have all missing data
+sum(lgg.pid %in% colnames(lgg.filt)) # Should equal the same number as samples in expression set: 530
+clin.lgg$vital_status <- ifelse(clin.lgg$vital_status == "alive",NA, 1)
+clin.lgg$days_to_death <- ifelse(clin.lgg$days_to_death == "--", NA, clin.lgg$days_to_death)
+
+## Get the probesets to perform Cox proportional-hazard regression on
+lgg.exp = lgg.expr[, -c(which(is.na(clin.lgg$days_to_death)), length(colnames(lgg.expr)))]
+lgg.outcome = as.numeric(clin.lgg$vital_status[!is.na(clin.lgg$vital_status)])
+lgg.time = as.numeric(clin.lgg$days_to_death[!is.na(clin.lgg$days_to_death)])
+lgg.filtfull = lgg.filtfull[, -c(which(is.na(clin.lgg$days_to_death)), length(colnames(lgg.expr)))]
+save(lgg.filtfull, lgg.exp, lgg.outcome, lgg.time, file = paste(dirs, "dataProcessed/TCGA-LGG/lgg.RData", sep = ""))
+```
+
+TCGA-SKCM
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+## Read Data
+skcm <- read.table(paste(dirs, "dataRaw/TCGAdata/", "TCGA-SKCM/Merged_RNASeq_20180507-165809/Merged_Counts.tsv", sep = ""), header = TRUE, sep = "\t")
+## Get ensemble names to match those in annotation set by removing the.# at the end
+sample.names <- unlist(lapply(strsplit(colnames(skcm), split = ".", fixed = TRUE), FUN = function(x) x[3]))
+sum(!duplicated(sample.names)) # Check to see if there are repeats. If there are, this number will be less than the total number of columns in original dataset
+## Make ensembl version names into just ensemble names and assign row names to these
+skcm$X <- unlist(lapply(strsplit(skcm$X, split = ".", fixed = TRUE), FUN = function(x) x[1]))
+rownames(skcm) <- skcm$X
+skcm <- skcm[, -1]
+## change column names to be sample names
+colnames(skcm) <- sample.names[-1]
+## Merge columns for samples that have repeats
+patterns <- unique(substr(names(skcm), 1, 4))  # store patterns in a vector
+skcm <- sapply(patterns, function(xx) rowSums(skcm[,grep(xx, names(skcm)), drop=FALSE]))
+dim(skcm) # Should match the number of cases from TCGA database: 456
+
+## Filter count data
+skcm.filt <- skcm[rowSums(skcm)>(10*ncol(skcm)), ]
+skcm.filt <- as.data.frame(skcm.filt)
+skcm.filt$gene_id <- rownames(skcm.filt)
+
+## Generate expression dataset
+skcm.expr <- skcm.filt[which(skcm.filt$gene_id %in% hg38.ensID), ] #Removed these subjects due to missingness in clinical dataset
+
+#read in and format clinical data
+clin.skcm <- read.table(paste(dirs, "dataRaw/TCGAdata/TCGA-SKCM/clinical.tsv", sep = ""), header = TRUE, sep = "\t")
+skcm.pid <- unlist(lapply(strsplit(clin.skcm$submitter_id, split = "-", fixed = TRUE), FUN = function(x) x[3]))
+clin.skcm$pid <- skcm.pid
+#clin.skcm <- clin.skcm[-which(clin.skcm$pid %in% c("A6YH", "5390")), ] ## Removed these subjects because they have all missing data
+sum(skcm.pid %in% colnames(skcm.filt)) # Should equal the same number as samples in expression set: 530
+clin.skcm$vital_status <- ifelse(clin.skcm$vital_status == "alive",NA, 1)
+clin.skcm$days_to_death <- ifelse(clin.skcm$days_to_death == "--", NA, clin.skcm$days_to_death)
+
+## Get the probesets to perform Cox proportional-hazard regression on
+skcm.exp = skcm.expr[, -c(which(is.na(clin.skcm$days_to_death)), length(colnames(skcm.expr)))]
+skcm.outcome = as.numeric(clin.skcm$vital_status[!is.na(clin.skcm$vital_status)])
+skcm.time = as.numeric(clin.skcm$days_to_death[!is.na(clin.skcm$days_to_death)])
+skcm.filtfull = skcm.filt[, -c(which(is.na(clin.skcm$days_to_death)), length(colnames(skcm.expr)))]
+save(skcm.filtfull, skcm.exp, skcm.outcome, skcm.time, file = paste(dirs, "dataProcessed/TCGA-SKCM/skcm.RData", sep = ""))
+```
